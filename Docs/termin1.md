@@ -22,7 +22,7 @@ Methoden
 Sprache: Java\
 Attribute:
 - Name (PK)
-
+- Socket *(TBD)*
 
 Methoden:
 - Konfiguration der Sockets
