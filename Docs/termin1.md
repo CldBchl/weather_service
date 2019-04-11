@@ -35,6 +35,10 @@ Datenstruktur der Sensordaten:
 - Attribute des Sensor Objekts
 - Timestamp
 
-Tests: 
+## Deployment script:
+- Sensoren und Wetterstationen initialisieren 
+- festlegen, welche Sensoren mit welcher Wetterstation verbunden sind *(?)*
+
+##Tests: 
 - 
 
