@@ -8,10 +8,12 @@ Typen: Temperatur, Luftfeuchtikeit, Regen, Windgeschwindigkeit
 
 Attribute:
 
-- Name
+- Name (PK)
 - Typ
 - Wert
 - Einheit
+- IP *(TBD)*
+- Port *(TBD)*
 
 Methoden
 
@@ -22,7 +24,11 @@ Methoden
 ## Wetterstation
 
 Sprache: Java
+
 Attribute:
+
+- Name (PK)
+- Socket *(TBD)*
 
 Methoden:
 
@@ -32,4 +38,16 @@ Methoden:
 - Speichern der Daten in Postgre-Datenbank
 - empfangen von Daten
 
-Tests: 
+Datenstruktur der Sensordaten:
+
+- Attribute des Sensor Objekts
+- Timestamp
+
+## Deployment script
+
+- Sensoren und Wetterstationen initialisieren 
+- festlegen, welche Sensoren mit welcher Wetterstation verbunden sind *(?)*
+
+##Tests
+- 
+

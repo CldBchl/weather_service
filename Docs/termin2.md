@@ -1,13 +1,33 @@
-# Backlog Termin 2
 
-- Erstellen der Thrift-Datei
+# Aufgabe 2 RPC (Remote Procedure Call)
+
+- Erstellen der Thrift Datei
 
 ## Wetterstation
 
-- Implementieren des durch Thrift erstellten Client-API
+- Thrift API implementieren (server)
+- Datenstruktur "currentState"
 
 ## Wetterdienst
 
-- Erstellen eines Wetterdienst-Servers in Java
-- Implementieren des durch Thrift erstellten Servers-API
-- Wetterstation speichert Daten in einer Postgres-Datenbank
+Sprache: Java
+
+Attribute:
+
+- Name
+- IP
+- Socket der verbundenen Wetterstation *(?)*
+
+- Thrift API implementieren (client)
+- Datenbank für persistente Datenspeicherung
+
+Datenstruktur um Status der Wetterstationen abzubilden:
+
+- Name (Wetterdienst)
+- aktuelle Messwerte der Sensoren
+
+## Deployment-Script erweitern
+
+- Wetterdienste initialisieren
+
+## Tests
