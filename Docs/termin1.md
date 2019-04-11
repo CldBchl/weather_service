@@ -4,10 +4,12 @@ jeder Sensor laeuft in einem eigenem Prozess \
 Typen: Temperatur, Luftfeuchtikeit, Regen, Windgeschwindigkeit
 
 Attribute:
-- Name
+- Name (PK)
 - Typ
 - Wert
 - Einheit
+- IP *(TBD)*
+- Port *(TBD)*
 
 Methoden
 - Konfiguration des Sockets
@@ -17,8 +19,10 @@ Methoden
 
 
 ## Wetterstation:
-Sprache: Java
+Sprache: Java\
 Attribute:
+- Name (PK)
+
 
 Methoden:
 - Konfiguration der Sockets
@@ -27,4 +31,10 @@ Methoden:
 - Speichern der Daten in DB
 - empfangen von Daten
 
+Datenstruktur der Sensordaten:
+- Attribute des Sensor Objekts
+- Timestamp
+
 Tests: 
+- 
+
