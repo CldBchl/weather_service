@@ -28,6 +28,7 @@ Datenstruktur um Status der Wetterstationen abzubilden:
 
 ## Deployment-Script erweitern
 
-- Wetterdienste initialisieren
+- Wetterdienste initialisieren 
+- festlegen, von welchen Wetterstationen die Daten empfangen werden sollen
 
 ## Tests
