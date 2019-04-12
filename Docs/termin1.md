@@ -35,7 +35,7 @@ Methoden:
 - Konfiguration der Sockets
 - implementieren des HTTP-Servers
 - implementieren der REST-API
-- Speichern der Daten in Postgre-Datenbank
+- Speichern der Daten in Postgres-Datenbank
 - empfangen von Daten
 
 Datenstruktur der Sensordaten:
@@ -45,9 +45,10 @@ Datenstruktur der Sensordaten:
 
 ## Deployment script
 
-- Sensoren und Wetterstationen initialisieren 
-- festlegen, welche Sensoren mit welcher Wetterstation verbunden sind *(?)*
+- 4 Sensoren pro Wetterstationen initialisieren 
+- 3 Wetterstationen initalisieren (die voneninander Unterscheidbar sind)
+- festlegen, welche Sensoren mit welcher Wetterstation verbunden sind 
 
-##Tests
+## Tests
 - 
 
