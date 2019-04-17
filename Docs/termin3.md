@@ -4,6 +4,9 @@
 
 ## Wetterdienst
 
-- Server multiplizieren
-- Daten durch Thrift-APIs synchronisieren
+- Server dockerisieren
+- Daten durch Thrift-APIs synchronisieren (warum synchronisieren, wenn alle Server Daten in einer gemeinsamen DB speichern)
+- Daten speichern
 - Serverausfälle simulieren
+
+## Test

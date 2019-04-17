@@ -51,6 +51,7 @@ Methoden:
 - Fehlerbehandlung (insbesondere bei Socketfunktionen)
 - Empfangspuffer fuer HTTP-Anfragen (\r\n\r\n suchen ua)
 
+
 Datenstruktur der Sensordaten JSON:
 
 - Attribute des Sensor Objekts
@@ -58,9 +59,14 @@ Datenstruktur der Sensordaten JSON:
 
 ## Deployment script
 
+
 - Sensoren und Wetterstationen initialisieren
 - Sensoren und Wetterstationen konfigurieren (Sendeintervall, id's, )
 - festlegen, welche Sensoren mit welcher Wetterstation verbunden sind *(?)*
+
+- 4 Sensoren pro Wetterstationen initialisieren 
+- 3 Wetterstationen initalisieren (die voneninander Unterscheidbar sind)
+- festlegen, welche Sensoren mit welcher Wetterstation verbunden sind
 
 ## Tests
 
