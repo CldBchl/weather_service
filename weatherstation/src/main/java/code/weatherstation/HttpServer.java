@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
-public class HttpServer {
+public class HttpServer implements Runnable{
 
   private static ServerSocket server;
   private static int backlog =1024;
@@ -14,4 +14,9 @@ public class HttpServer {
     
   }
 
+
+  @Override
+  public void run() {
+    System.out.println("thread2");
+  }
 }

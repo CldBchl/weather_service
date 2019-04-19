@@ -23,19 +23,23 @@ public class Weatherstation implements Runnable{
 
   private static InetAddress serverIpAddress;
   private static int serverPort;
+  private static HttpServer server;
 
   private String stationName;
 
-  public void main (String [] args)
+  public static void main (String [] args)
   {
     Weatherstation myWS=
         new Weatherstation(args[0], args[1], args[2], args[3], args[4]);
     System.out.println(myWS.stationName);
 
     initializeSocket();
-    //receiveUDPPackets();
+    initializeHttpServer();
 
-    run();
+    receiveUDPPackets();
+
+    //run();
+    //server.run();
   }
 
   public Weatherstation(String n, String receiveIP, String receiveP, String serverIP, String serverP) {
@@ -99,7 +103,7 @@ public class Weatherstation implements Runnable{
   private static void initializeHttpServer(){
 
     try {
-      HttpServer server= new HttpServer(serverPort, serverIpAddress);
+      server= new HttpServer(serverPort, serverIpAddress);
       log.log(Level.INFO, "succesful receive socket creation");
     } catch (IOException e) {
 
@@ -114,6 +118,5 @@ public class Weatherstation implements Runnable{
   @Override
   public void run() {
   receiveUDPPackets();
-  initializeHttpServer();
   }
 }
