@@ -4,6 +4,8 @@
 
 package weatherstation;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -13,8 +15,9 @@ public class Weatherstation {
 
   //attributes
     private String name;
-    private InetAddress ipAdress;
-    private int port;
+    private static InetAddress ipAdress;
+    private static int port;
+    private static DatagramSocket socket;
 
     public Weatherstation(String n, String i, String p) {
       name = n;
@@ -31,12 +34,28 @@ public class Weatherstation {
       Weatherstation myWS=
           new Weatherstation(args[0], args[1], args[2]);
         System.out.println(myWS.name);
+
+        initializeSocket();
+
+        byte[] buf = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(buf, 1024);
+
+      //wait for incoming UDP package
+      while (true) {
+        try {
+          socket.receive(packet);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
     }
 
-  private void initializeSocket(){
+  private static void initializeSocket(){
 
     try {
-      DatagramSocket socket= new DatagramSocket(port, ipAdress);
+      socket= new DatagramSocket(port, ipAdress);
+      socket.setReceiveBufferSize(1024);
     } catch (SocketException e) {
       e.printStackTrace();
     }
