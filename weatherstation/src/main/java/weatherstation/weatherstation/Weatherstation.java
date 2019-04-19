@@ -2,6 +2,8 @@
  * This is the Weatherstation class.
  */
 
+package weatherstation;
+
 public class Weatherstation {
 
   //attributes
@@ -17,9 +19,13 @@ public class Weatherstation {
 
   public static void main (String [] args)
     {
-      Weatherstation myWS= new Weatherstation(args[0],args[1],args[2]);
-
+      Weatherstation myWS=
+          new Weatherstation("1", "1","1");
+        System.out.println(myWS.name);
     }
 
+  private void initializeSocket(){
+
+  }
 
 }
