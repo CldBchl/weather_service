@@ -10,10 +10,8 @@ import java.util.logging.Logger;
 
 public class SensorDataHandler implements Runnable{
 
-  private static InetAddress receiveIpAddress;
-  private static int receivePort;
-  private static DatagramSocket udpSocket;
   private static final Logger log = Logger.getLogger( SensorDataHandler.class.getName() );
+  private static DatagramSocket udpSocket;
 
   public SensorDataHandler(int receivePort, InetAddress receiveIpAddress){
     try {
@@ -37,7 +35,6 @@ public class SensorDataHandler implements Runnable{
 
         udpSocket.receive(packet);
 
-        // Empfänger auslesen
         InetAddress address = packet.getAddress();
         int         port    = packet.getPort();
         int         len     = packet.getLength();

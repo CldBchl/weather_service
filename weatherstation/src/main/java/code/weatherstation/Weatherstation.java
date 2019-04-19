@@ -20,22 +20,9 @@ public class Weatherstation{
 
   private static InetAddress serverIpAddress;
   private static int serverPort;
-  private static HttpServer server;
+  private static HttpServer httpServer;
 
   private String stationName;
-
-  public static void main (String [] args)
-  {
-    Weatherstation myWS=
-        new Weatherstation(args[0], args[1], args[2], args[3], args[4]);
-    System.out.println(myWS.stationName);
-
-    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress);
-    server= new HttpServer(serverPort, serverIpAddress);
-
-    sensorDataHandler.run();
-    server.run();
-  }
 
   public Weatherstation(String n, String receiveIP, String receiveP, String serverIP, String serverP) {
     stationName = n;
@@ -47,6 +34,20 @@ public class Weatherstation{
     }
     receivePort = Integer.parseInt(receiveP);
     serverPort = Integer.parseInt(serverP);
+  }
+
+  public static void main (String [] args)
+  {
+    Weatherstation weatherstation=
+        new Weatherstation(args[0], args[1], args[2], args[3], args[4]);
+    System.out.println(weatherstation.stationName);
+
+    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress);
+    httpServer = new HttpServer(serverPort, serverIpAddress);
+
+    //start separate threads for httpServer and sensorDataHandler
+    sensorDataHandler.run();
+    httpServer.run();
   }
 
 

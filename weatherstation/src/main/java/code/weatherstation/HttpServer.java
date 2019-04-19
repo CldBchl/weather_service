@@ -8,10 +8,9 @@ import java.util.logging.Logger;
 
 public class HttpServer implements Runnable{
 
+  private static final Logger log = Logger.getLogger( HttpServer.class.getName() );
   private static ServerSocket server;
   private static int backlog =1024;
-
-  private static final Logger log = Logger.getLogger( HttpServer.class.getName() );
 
   public HttpServer(int p, InetAddress ip) {
     try {
@@ -21,7 +20,6 @@ public class HttpServer implements Runnable{
       e.printStackTrace();
       log.log(Level.WARNING, "Receive socket initialization failed");
     }
-
   }
 
 
