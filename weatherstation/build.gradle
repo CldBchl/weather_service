@@ -29,4 +29,4 @@ dependencies {
 }
 
 // Define the main class for the application
-mainClassName = 'Weatherstation.java'
+mainClassName = 'weatherstation.Weatherstation'
