@@ -49,7 +49,7 @@ public class SensorDataHandler implements Runnable{
       catch (IOException e) {
         e.printStackTrace();
         System.out.println("Error when receiving UDP packet");
-        log.log(Level.WARNING, "UDP error when receiving package");git
+        log.log(Level.WARNING, "UDP error when receiving package");
 
       }
     }
