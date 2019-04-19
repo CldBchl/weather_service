@@ -26,6 +26,8 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
+
+    implementation 'org.json:json:20180813'
 }
 
 // Define the main class for the application

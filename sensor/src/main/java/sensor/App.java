@@ -4,11 +4,15 @@
 package sensor;
 
 public class App {
+
     public String getGreeting() {
         return "Hello world.";
     }
 
     public static void main(String[] args) {
         System.out.println(new App().getGreeting());
+
+        Sensor snsr = new Sensor("temperature", "127.0.0.1" ,"5555");
+        snsr.run();
     }
 }
