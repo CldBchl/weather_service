@@ -26,6 +26,6 @@ public class HttpServer implements Runnable{
   @Override
   public void run() {
     log.log(Level.INFO, "sensorDataHandler thread successful");
-
+    //TODO: Call listen method here
   }
 }
