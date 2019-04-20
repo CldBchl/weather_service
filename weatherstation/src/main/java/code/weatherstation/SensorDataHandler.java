@@ -17,10 +17,10 @@ public class SensorDataHandler implements Runnable{
     try {
       udpSocket = new DatagramSocket(receivePort, receiveIpAddress);
       udpSocket.setReceiveBufferSize(1024);
-      log.log(Level.INFO, "succesful receive socket creation");
+      log.log(Level.INFO, "Successful UDP socket creation");
     } catch (SocketException e) {
       e.printStackTrace();
-      log.log(Level.WARNING, "Receive socket initialization failed");
+      log.log(Level.WARNING, "UDP socket initialization failed");
     }
 
   }
@@ -40,13 +40,13 @@ public class SensorDataHandler implements Runnable{
         int         len     = packet.getLength();
         byte[]      data    = packet.getData();
 
-        System.out.printf( "Anfrage von %s vom Port %d mit der Länge %d:%n%s%n",
-            address, port, len, new String( data, 0, len ) );
+        System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
+            address, port, new String( data, 0, len ) );
       }
       catch (IOException e) {
         e.printStackTrace();
         System.out.println("Error when receiving UDP packet");
-        log.log(Level.WARNING, "UDP error when receiving package");
+        log.log(Level.WARNING, "Error when UDP receiving package");
 
       }
     }
