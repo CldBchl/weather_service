@@ -1,22 +1,33 @@
 package sensor;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Random;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import org.json.*;
-import java.util.Date;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 
-public class Sensor implements  {
+
+
+public class Sensor{
 
     private String type;
     private String unit;
     private InetAddress ip;
     private int port;
     private DatagramSocket socket;
+    private InetAddress remoteIp;
+    private int remotePort;
+
 
     public Sensor(String type, String ip, String port, String remoteIp, String remotePort){
         this.type = type;
+        this.remotePort = Integer.parseInt(remotePort);
+
         try {
             this.ip = InetAddress.getByName(ip);
         } catch (Exception e){
@@ -35,6 +46,13 @@ public class Sensor implements  {
             e.printStackTrace();
         }
 
+
+        try {
+            this.ip = InetAddress.getByName(remoteIp);
+        } catch (Exception e){
+            System.out.println("Invalid ip-address!!: ");
+            e.printStackTrace();
+        }
 
     }
 
@@ -96,7 +114,14 @@ public class Sensor implements  {
             System.out.println(lastValue);
         }
 
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+        String timeStamp = ZonedDateTime                    // Represent a moment as perceived in the wall-clock time used by the people of a particular region ( a time zone).
+                .now(                            // Capture the current moment.
+                        ZoneId.of( "Africa/Tunis" )  // Specify the time zone using proper Continent/Region name. Never use 3-4 character pseudo-zones such as PDT, EST, IST.
+                )                                // Returns a `ZonedDateTime` object.
+                .format(                         // Generate a `String` object containing text representing the value of our date-time object.
+                        DateTimeFormatter.ofPattern( "uuuu.MM.dd.HH.mm.ss" )
+                );                                // Returns a `String`.
+
 
         JSONObject data = new JSONObject();
         data.put("type","temperature");
@@ -104,8 +129,13 @@ public class Sensor implements  {
         data.put("unit","°C");
         data.put("timestamp", timeStamp);
        // this.socket.send();
-
-        //https://stackoverflow.com/questions/23068676/how-to-get-current-timestamp-in-string-format-in-java-yyyy-mm-dd-hh-mm-ss
+        byte[] bytes = data.toString().getBytes(StandardCharsets.UTF_8);
+        DatagramPacket p = new DatagramPacket(bytes, bytes.length, this.remoteIp, this.remotePort );
+        try {
+            this.socket.send(p);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendData(){
