@@ -8,6 +8,10 @@ import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/*
+ * The SensorDataHandler class receives data via UDP and processes the incoming messages.
+ */
+
 public class SensorDataHandler implements Runnable{
 
   private static final Logger log = Logger.getLogger( SensorDataHandler.class.getName() );
@@ -21,6 +25,8 @@ public class SensorDataHandler implements Runnable{
     } catch (SocketException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "UDP socket initialization failed");
+      //TODO: handle error
+      return;
     }
 
   }

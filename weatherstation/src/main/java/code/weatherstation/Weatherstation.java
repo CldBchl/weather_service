@@ -6,7 +6,7 @@ import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
 /*
- * This is the Weatherstation class.
+ * The Weatherstation class receives sensor data via UDP and handles Http requests via TCP.
  */
 
 public class Weatherstation{
@@ -46,8 +46,14 @@ public class Weatherstation{
     httpServer = new HttpServer(serverPort, serverIpAddress);
 
     //start separate threads for httpServer and sensorDataHandler
-    sensorDataHandler.run();
-    httpServer.run();
+    Thread serverThread= new Thread(httpServer);
+    serverThread.start();
+
+    Thread sensorDataHandlerThread= new Thread(sensorDataHandler);
+    sensorDataHandlerThread.start();
+    //httpServer.run();
+    //sensorDataHandler.run();
+
   }
 
 
