@@ -12,7 +12,9 @@ public class App {
     public static void main(String[] args) {
         System.out.println(new App().getGreeting());
 
+
         Sensor snsr = new Sensor("temperature", "127.0.0.1" ,"5556", "127.0.0.1", "5555");
+
         snsr.run();
     }
 }

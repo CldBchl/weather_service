@@ -30,7 +30,9 @@ public class Sensor{
 
         try {
             this.ip = InetAddress.getByName(ip);
+
             this.remoteIp = InetAddress.getByName(remoteIp);
+
         } catch (Exception e){
             System.out.println("Invalid ip-address!!: ");
             e.printStackTrace();
@@ -38,12 +40,21 @@ public class Sensor{
 
         this.port = Integer.parseInt(port);
 
+
         this.socket = initializeSocket(this.ip, this.port);
 
         try {
             this.socket.connect(InetAddress.getByName(remoteIp),Integer.parseInt(remoteIp));
+
         } catch (Exception e){
             System.out.println("Connection failed ");
+            e.printStackTrace();
+        }
+
+        try {
+            this.ip = InetAddress.getByName(remoteIp);
+        } catch (Exception e){
+            System.out.println("Invalid ip-address!!: ");
             e.printStackTrace();
         }
     }
@@ -57,9 +68,11 @@ public class Sensor{
     private DatagramSocket initializeSocket(InetAddress ip, int port){
        try {
 
+
            this.socket = new DatagramSocket(port, ip);
 
            return socket;
+
 
        } catch (Exception e){
            System.out.println("Couldn't create Socket: ");
@@ -122,10 +135,11 @@ public class Sensor{
         data.put("value", lastValue);
         data.put("unit","°C");
         data.put("timestamp", timeStamp);
+
         byte[] bytes = data.toString().getBytes(StandardCharsets.UTF_8);
         System.out.println(data.toString());
         DatagramPacket p = new DatagramPacket(bytes, bytes.length, this.remoteIp, this.remotePort );
-        //System.out.println(;
+
         try {
             this.socket.send(p);
         } catch (IOException e) {
