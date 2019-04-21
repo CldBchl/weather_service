@@ -12,6 +12,10 @@ import java.time.format.DateTimeFormatter;
 import java.text.DecimalFormat;
 
 
+/*
+ * The Sensor class generates data and sends it via UDP
+ */
+
 public class Sensor{
 
     private String type;
@@ -25,12 +29,11 @@ public class Sensor{
 
     public Sensor(String type, String interval, String ip, String port, String remoteIp, String remotePort){
 
+        // Assignments
         this.interval = Integer.parseInt(interval);
         this.type = type;
         this.port = Integer.parseInt(port);
         this.remotePort = Integer.parseInt(remotePort);
-
-
         try {
             this.ip = InetAddress.getByName(ip);
             this.remoteIp = InetAddress.getByName(remoteIp);
@@ -39,41 +42,44 @@ public class Sensor{
             e.printStackTrace();
         }
 
-
+        // Create socket
         try {
             this.udpSocket = new DatagramSocket(this.port, this.ip);
         } catch (Exception e){
-            System.out.println("Couldn't create Socket: ");
+            System.out.println("Couldn't create Socket");
             e.printStackTrace();
         }
 
     }
 
+
+    /*
+     * Running-loop
+     */
     public void run(){
-       float lastValue = 0;
+       float value = 0;
         for (int i = 0; i<5; i++){
             try {
-                Thread.sleep(this.interval*1000);
+                Thread.sleep(this.interval*1000); // seconds to ms
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            lastValue = generateData(lastValue);
+            value = generateData(value);
+
         }
     }
 
 
-    private float generateData(float value) {
+    private float generateData(float lastValue) {
+        // Assignments
         Random rand = new Random();
         DecimalFormat df = new DecimalFormat("#.##");
+        float min;
+        float max;
+        String unit;
+        float step;
 
-        float min = -1;
-        float max = -1;
-        String unit = "" ;
-
-        float step = -1;
-        //int lastValue = 15;
-
-
+        // Configure datagenerator
         switch (this.type) {
             case "temperature":
                 min = 10;   // minimum temperature
@@ -107,41 +113,43 @@ public class Sensor{
                     throw new IllegalArgumentException("Invalid type" + this.type);
         }
 
+        // Generate data
         float delta = rand.nextFloat();
         boolean bool = rand.nextBoolean();
         if (!bool) {
-            value += delta;
+            lastValue += delta;
         } else {
-            value -= delta;
+            lastValue -= delta;
         }
-        if (value < min) {
-            value = min + step;
-        } else if (value > max) {
-            value = max - step;
+        if (lastValue < min) {
+            lastValue = min + step;
+        } else if (lastValue > max) {
+            lastValue = max - step;
         }
 
+        // Create Timestamp
+        String timeStamp = ZonedDateTime.now(ZoneId.of( "Europe/Berlin" ))
+                .format(DateTimeFormatter.ofPattern( "uuuu.MM.dd.HH.mm.ss" ));
 
-        String timeStamp = ZonedDateTime.now(ZoneId.of( "Europe/Berlin" )).
-                format(DateTimeFormatter.ofPattern( "uuuu.MM.dd.HH.mm.ss" ));
-
-
+        // Create JSON
         JSONObject data = new JSONObject();
         data.put("type",this.type);
-        data.put("value", df.format(value));
+        data.put("value", df.format(lastValue));
         data.put("unit",unit);
         data.put("timestamp", timeStamp);
 
+        // JSON -> DataPacket
         byte[] bytes = data.toString().getBytes(StandardCharsets.UTF_8);
-        System.out.println(data.toString());
         DatagramPacket p = new DatagramPacket(bytes, bytes.length, this.remoteIp, this.remotePort );
 
+        // Send DataPacket
         try {
             this.udpSocket.send(p);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return value;
+        return lastValue;
     }
 
 }
