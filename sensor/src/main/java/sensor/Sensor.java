@@ -105,32 +105,22 @@ public class Sensor{
                     throw new IllegalArgumentException("Invalid type" + this.type);
         }
 
-            float delta = rand.nextFloat();
-
-            boolean bool = rand.nextBoolean();
-
-            if (!bool) {
-                value += delta;
-            } else {
-                value -= delta;
-            }
-
-            if (value < min) {
-                value = min + step;
-            } else if (value > max) {
-                value = max - step;
-            }
-
-            //System.out.println(value);
+        float delta = rand.nextFloat();
+        boolean bool = rand.nextBoolean();
+        if (!bool) {
+            value += delta;
+        } else {
+            value -= delta;
+        }
+        if (value < min) {
+            value = min + step;
+        } else if (value > max) {
+            value = max - step;
+        }
 
 
-        String timeStamp = ZonedDateTime                    // Represent a moment as perceived in the wall-clock time used by the people of a particular region ( a time zone).
-                .now(                            // Capture the current moment.
-                        ZoneId.of( "Europe/Berlin" )  // Specify the time zone using proper Continent/Region name. Never use 3-4 character pseudo-zones such as PDT, EST, IST.
-                )                                // Returns a `ZonedDateTime` object.
-                .format(                         // Generate a `String` object containing text representing the value of our date-time object.
-                        DateTimeFormatter.ofPattern( "uuuu.MM.dd.HH.mm.ss" )
-                );                                // Returns a `String`.
+        String timeStamp = ZonedDateTime.now(ZoneId.of( "Europe/Berlin" )).
+                format(DateTimeFormatter.ofPattern( "uuuu.MM.dd.HH.mm.ss" ));
 
 
         JSONObject data = new JSONObject();
