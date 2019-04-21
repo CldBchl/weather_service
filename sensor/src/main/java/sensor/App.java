@@ -7,7 +7,7 @@ public class App {
 
     public static void main(String[] args) {
        // "temperature", "127.0.0.1" ,"5556","127.0.0.1", "5555"
-        Sensor snsr = new Sensor(args[0],args[1],args[2],args[3],args[4]);
+        Sensor snsr = new Sensor(args[0],args[1],args[2],args[3],args[4], args[5]);
         snsr.run();
     }
 }

@@ -20,10 +20,12 @@ public class Sensor{
     private DatagramSocket udpSocket;
     private InetAddress remoteIp;
     private int remotePort;
+    private int interval;
 
 
-    public Sensor(String type, String ip, String port, String remoteIp, String remotePort){
+    public Sensor(String type, String interval, String ip, String port, String remoteIp, String remotePort){
 
+        this.interval = Integer.parseInt(interval);
         this.type = type;
         this.port = Integer.parseInt(port);
         this.remotePort = Integer.parseInt(remotePort);
@@ -51,7 +53,7 @@ public class Sensor{
        float lastValue = 0;
         for (int i = 0; i<5; i++){
             try {
-                Thread.sleep(2000);
+                Thread.sleep(this.interval*1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
