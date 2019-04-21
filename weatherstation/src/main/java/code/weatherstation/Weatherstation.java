@@ -45,14 +45,13 @@ public class Weatherstation{
     sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress);
     httpServer = new HttpServer(serverPort, serverIpAddress);
 
-    //start separate threads for httpServer and sensorDataHandler
+    //launch httpServer thread
     Thread serverThread= new Thread(httpServer);
     serverThread.start();
 
+    //launch sensorDataHandler thread
     Thread sensorDataHandlerThread= new Thread(sensorDataHandler);
     sensorDataHandlerThread.start();
-    //httpServer.run();
-    //sensorDataHandler.run();
 
   }
 

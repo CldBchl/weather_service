@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,6 +25,10 @@ public class HttpRequestHandler extends Thread {
   private static InetAddress socketIP;
   private static int socketPort;
   private static Socket socket;
+  private String httpDelimiter = "\r\n\r\n";
+
+  private BufferedReader httpMessage;
+  private String getRequest;
 
   public HttpRequestHandler(Socket s) {
 
@@ -33,7 +38,8 @@ public class HttpRequestHandler extends Thread {
 
   private void handleRequests() {
     log.log(Level.INFO, "enter HandlerSocket method");
-    readMessage();
+    getRequest=readMessage();
+
   }
 
 
@@ -43,14 +49,21 @@ public class HttpRequestHandler extends Thread {
     handleRequests();
   }
 
-  public void readMessage() {
+  public String readMessage() {
     try {
-      BufferedReader httpMessage = new BufferedReader(
-          new InputStreamReader(socket.getInputStream()));
+      Scanner scanner = new Scanner(new InputStreamReader(socket.getInputStream()));
+      scanner.useDelimiter(httpDelimiter);
+      String message;
+      message = scanner.next();
+      System.out.println(message);
+      return message;
     } catch (IOException e) {
       e.printStackTrace();
-      log.log(Level.WARNING, "Error when reading http message");
+      log.log(Level.WARNING, "Http message could not be read");
+      return  null;
     }
   }
 }
+
+
 
