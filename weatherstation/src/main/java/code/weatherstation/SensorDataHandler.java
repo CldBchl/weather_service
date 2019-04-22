@@ -31,6 +31,14 @@ public class SensorDataHandler implements Runnable{
 
   }
 
+  private static void handleSensorData(){
+
+    receiveUDPPackets();
+    parseAndStoreSensorData();
+
+  }
+
+
   private static void receiveUDPPackets(){
     byte[] buf = new byte[1024];
     DatagramPacket packet = new DatagramPacket(buf, 1024);
@@ -66,7 +74,7 @@ public class SensorDataHandler implements Runnable{
   @Override
   public void run() {
     log.log(Level.INFO, "sensorDataHandler thread successful");
-    receiveUDPPackets();
+    handleSensorData();
 
   }
 }
