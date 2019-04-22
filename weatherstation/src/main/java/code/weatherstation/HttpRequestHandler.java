@@ -3,10 +3,12 @@ package code.weatherstation;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Scanner;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,17 +24,17 @@ public class HttpRequestHandler extends Thread {
   static final String METHOD_NOT_SUPPORTED = "BadRequest.html";
 
   private static final Logger log = Logger.getLogger(HttpRequestHandler.class.getName());
-  private static InetAddress socketIP;
-  private static int socketPort;
   private static Socket socket;
-  private String httpDelimiter = "\r\n\r\n";
+  private static SocketChannel socketChannel;
+  private static SelectionKey key;
 
   private BufferedReader httpMessage;
   private String httpRequest;
 
-  public HttpRequestHandler(Socket s) {
-
-    socket = s;
+  public HttpRequestHandler(SelectionKey k) {
+    key=k;
+    socketChannel=(SocketChannel)key.channel();
+    socket = socketChannel.socket();
     log.log(Level.INFO, "Successful handlerSocket creation");
   }
 
@@ -40,26 +42,33 @@ public class HttpRequestHandler extends Thread {
     log.log(Level.INFO, "enter HandlerSocket method");
     httpRequest =readMessage();
 
-  }
-
-  public Socket getSocket(){
-      return this.socket;
+    //set key to check readiness to read
+    key.interestOps(SelectionKey.OP_READ);
   }
 
   @Override
   public void run() {
 
+    //System.out.println("in run method");
     handleRequests();
+
   }
 
   private String readMessage() {
+
     try {
-      Scanner scanner = new Scanner(new InputStreamReader(socket.getInputStream()));
-      scanner.useDelimiter(httpDelimiter);
-      String message;
-      message = scanner.next();
+      ByteBuffer byteBuffer= (ByteBuffer)key.attachment();
+      byteBuffer.clear();
+      socketChannel.read(byteBuffer);
+
+      //flips buffer from read to write mode
+      byteBuffer.flip();
+      CharBuffer charBuffer = Charset.defaultCharset().newDecoder().decode(byteBuffer);
+
+      String message=charBuffer.toString();
       System.out.println(message);
       return message;
+
     } catch (IOException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "Http message could not be read");
