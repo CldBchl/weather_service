@@ -1,9 +1,7 @@
 package code.weatherstation;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -22,17 +20,10 @@ import java.util.logging.Logger;
 
 public class HttpRequestHandler extends Thread {
 
-  static final File WEB_ROOT = new File("/Resources/BadRequest.html");
-  static final String DEFAULT_FILE = "../../../Resources.SensorDataTemplate.html";
-  static final String FILE_NOT_FOUND = "BadRequest.html";
-  static final String METHOD_NOT_SUPPORTED = "BadRequest.html";
-
   private static final Logger log = Logger.getLogger(HttpRequestHandler.class.getName());
-  private static Socket socket;
   private static SocketChannel socketChannel;
   private static SelectionKey key;
 
-  private BufferedReader httpMessage;
   private String httpRequest;
   private int response202 = 202;
   private int response404 = 404;
@@ -40,7 +31,6 @@ public class HttpRequestHandler extends Thread {
   public HttpRequestHandler(SelectionKey k) {
     key = k;
     socketChannel = (SocketChannel) key.channel();
-    socket = socketChannel.socket();
     log.log(Level.INFO, "Successful handlerSocket creation");
   }
 
@@ -52,19 +42,14 @@ public class HttpRequestHandler extends Thread {
       //set key to check readiness to read
       key.interestOps(SelectionKey.OP_READ);
     }
-
   }
 
   @Override
   public void run() {
-
-    //System.out.println("in run method");
     handleRequests();
-
   }
 
   private Boolean readMessage() {
-
     try {
       ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
       byteBuffer.clear();
@@ -89,7 +74,6 @@ public class HttpRequestHandler extends Thread {
         key.cancel();
         return false;
       }
-
     } catch (IOException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "Http message could not be read");
@@ -145,43 +129,41 @@ public class HttpRequestHandler extends Thread {
         URL url = getClass().getClassLoader().getResource("BadRequest.html");
 
         try {
-          File file =new File(url.toURI());
+          File file = new File(url.toURI());
 
-        String path= file.getPath();
-        byte[] byteArrayBody = Files.readAllBytes(Paths.get(path));
+          String path = file.getPath();
+          byte[] byteArrayBody = Files.readAllBytes(Paths.get(path));
 
-        int bodyLenght = byteArrayBody.length;
+          int bodyLenght = byteArrayBody.length;
 
-        String header = buildHttpHeader(response404, bodyLenght);
+          String header = buildHttpHeader(response404, bodyLenght);
 
-        ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
-        byteBuffer.clear();
-        //String httpResponse = header + body;
-        byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
-        byteBuffer = byteBuffer.put(byteArrayHeader);
-        byteBuffer = byteBuffer.put(byteArrayBody);
+          ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
+          byteBuffer.clear();
+          //String httpResponse = header + body;
+          byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
+          byteBuffer = byteBuffer.put(byteArrayHeader);
+          byteBuffer = byteBuffer.put(byteArrayBody);
 
-        byteBuffer.flip();
+          byteBuffer.flip();
 
-        socketChannel.write(byteBuffer);
-        byteBuffer.clear();
-        log.log(Level.WARNING, "Server closed connection");
-        key.channel().close();
-        key.cancel();
-      } catch (URISyntaxException e) {
-        e.printStackTrace();
-      }
-    } catch (IOException e) {
+          socketChannel.write(byteBuffer);
+          byteBuffer.clear();
+          log.log(Level.WARNING, "Server closed connection");
+          key.channel().close();
+          key.cancel();
+        } catch (URISyntaxException e) {
+          e.printStackTrace();
+        }
+      } catch (IOException e) {
         e.printStackTrace();
         //TODO handle error
       }
-
     }
   }
 
   private String buildHttpHeader(int code, int lenght) {
     String header;
-
     if (code == response202) {
       header = "HTTP/1.1 200 Ok\r\n";
     } else {
