@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
@@ -127,19 +129,28 @@ public class HttpRequestHandler extends Thread {
       byteBuffer.flip();
       try {
         socketChannel.write(byteBuffer);
+        byteBuffer.clear();
+        log.log(Level.WARNING, "Server closed connection");
+        key.channel().close();
+        key.cancel();
       } catch (IOException e) {
         e.printStackTrace();
         //TODO handle error
       }
-      byteBuffer.clear();
     } else {
       try {
         // we return the not supported file to the client
-        File file = new File(WEB_ROOT, METHOD_NOT_SUPPORTED);
-        String path = WEB_ROOT.getPath();
+
+        //final Enumeration<URL> en = HttpRequestHandler.class.getClassLoader().getResources("");
+        URL url = getClass().getClassLoader().getResource("BadRequest.html");
+
+        try {
+          File file =new File(url.toURI());
+
+        String path= file.getPath();
         byte[] byteArrayBody = Files.readAllBytes(Paths.get(path));
 
-        int bodyLenght = (int) byteArrayBody.length;
+        int bodyLenght = byteArrayBody.length;
 
         String header = buildHttpHeader(response404, bodyLenght);
 
@@ -154,7 +165,13 @@ public class HttpRequestHandler extends Thread {
 
         socketChannel.write(byteBuffer);
         byteBuffer.clear();
-      } catch (IOException e) {
+        log.log(Level.WARNING, "Server closed connection");
+        key.channel().close();
+        key.cancel();
+      } catch (URISyntaxException e) {
+        e.printStackTrace();
+      }
+    } catch (IOException e) {
         e.printStackTrace();
         //TODO handle error
       }
@@ -170,8 +187,8 @@ public class HttpRequestHandler extends Thread {
     } else {
       header = "HTTP/1.1 404 Not Found\r\n";
     }
-    header += "Content-type: text/html\r\n";
-    header += "Content-length: " + lenght;
+    header += "Content-type:text/html\r\n";
+    header += "Content-length:" + lenght;
     header += "\r\n\r\n";
     return header;
   }
