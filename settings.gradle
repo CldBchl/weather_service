@@ -8,3 +8,6 @@
  */
 
 rootProject.name = 'vs_baechle_klinger'
+include 'sensor'
+include 'weatherstation'
+include 'weatherservice'
