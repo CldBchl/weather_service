@@ -1,16 +1,14 @@
 package code.weatherstation;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +38,7 @@ public class HttpRequestHandler extends Thread {
     if (connectionIsActive) {
       processRequest(httpRequest);
       //set key to check readiness to read
-      key.interestOps(SelectionKey.OP_READ);
+      //key.interestOps(SelectionKey.OP_READ);
     }
   }
 
@@ -61,7 +59,6 @@ public class HttpRequestHandler extends Thread {
         CharBuffer charBuffer = Charset.defaultCharset().newDecoder().decode(byteBuffer);
 
         String message = charBuffer.toString();
-        System.out.println(message);
 
         String[] lines = message.split("\r\n");
         httpRequest = lines[0];
@@ -123,38 +120,38 @@ public class HttpRequestHandler extends Thread {
       }
     } else {
       try {
-        // we return the not supported file to the client
+        // return "404 not found" to client
 
-        //final Enumeration<URL> en = HttpRequestHandler.class.getClassLoader().getResources("");
-        URL url = getClass().getClassLoader().getResource("BadRequest.html");
-
-        try {
-          File file = new File(url.toURI());
-
-          String path = file.getPath();
-          byte[] byteArrayBody = Files.readAllBytes(Paths.get(path));
-
-          int bodyLenght = byteArrayBody.length;
-
-          String header = buildHttpHeader(response404, bodyLenght);
-
-          ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
-          byteBuffer.clear();
-          //String httpResponse = header + body;
-          byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
-          byteBuffer = byteBuffer.put(byteArrayHeader);
-          byteBuffer = byteBuffer.put(byteArrayBody);
-
-          byteBuffer.flip();
-
-          socketChannel.write(byteBuffer);
-          byteBuffer.clear();
-          log.log(Level.WARNING, "Server closed connection");
-          key.channel().close();
-          key.cancel();
-        } catch (URISyntaxException e) {
-          e.printStackTrace();
+        //read BadRequest.html into a ByteArrayOutputStream and parse it to byteBuffer
+        InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        int length;
+        byte[] buffer= new byte[1024];
+        while ((length=in.read(buffer)) != -1)
+        {
+          result.write(buffer, 0, length);
         }
+        String fileContent= result.toString(StandardCharsets.UTF_8.name());
+        int bodyLength= fileContent.length();
+        byte[] byteArrayBody = fileContent.getBytes(Charset.defaultCharset());
+
+        String header = buildHttpHeader(response404, bodyLength);
+
+        ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
+        byteBuffer.clear();
+        byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
+
+        //add header and body to byteBuffer
+        byteBuffer = byteBuffer.put(byteArrayHeader);
+        byteBuffer = byteBuffer.put(byteArrayBody);
+
+        byteBuffer.flip();
+        socketChannel.write(byteBuffer);
+        byteBuffer.clear();
+
+        log.log(Level.WARNING, "Server closed connection");
+        key.channel().close();
+        key.cancel();
       } catch (IOException e) {
         e.printStackTrace();
         //TODO handle error
@@ -174,7 +171,6 @@ public class HttpRequestHandler extends Thread {
     header += "\r\n\r\n";
     return header;
   }
-
 
 }
 
