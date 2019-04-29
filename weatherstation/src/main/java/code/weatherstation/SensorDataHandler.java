@@ -7,6 +7,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.simple.*;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /*
  * The SensorDataHandler class receives data via UDP and processes the incoming messages.
@@ -32,14 +35,14 @@ public class SensorDataHandler implements Runnable{
   }
 
   private static void handleSensorData(){
-
-    receiveUDPPackets();
-    parseAndStoreSensorData();
-
+    while (true) {
+      String data = receiveUDPPackets();
+      parseAndStoreSensorData(data);
+    }
   }
 
 
-  private static void receiveUDPPackets(){
+  private static String receiveUDPPackets(){
     byte[] buf = new byte[1024];
     DatagramPacket packet = new DatagramPacket(buf, 1024);
 
@@ -54,19 +57,37 @@ public class SensorDataHandler implements Runnable{
         int         len     = packet.getLength();
         byte[]      data    = packet.getData();
 
-        System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
-            address, port, new String( data, 0, len ) );
+        String dataString = new String( data, 0, len );
+
+        //System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
+        //    address, port, dataString);
+
+        return dataString;
+
       }
       catch (IOException e) {
         e.printStackTrace();
         System.out.println("Error when receiving UDP packet");
         log.log(Level.WARNING, "Error when UDP receiving package");
 
+        return "error";
+
       }
+
     }
   }
 
-  private static void parseAndStoreSensorData(){
+  private static void parseAndStoreSensorData(String data){
+    System.out.println(data);
+
+    JSONParser parser = new JSONParser();
+    try {
+      JSONObject json = parser.parse(data);
+
+
+    }catch (ParseException e){
+      e.printStackTrace();
+    }
 
     //TODO: implement method
   }
