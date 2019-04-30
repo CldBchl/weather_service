@@ -1,5 +1,7 @@
 package code.weatherstation;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -10,6 +12,7 @@ import java.util.logging.Logger;
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import java.io.FileWriter;
 
 /*
  * The SensorDataHandler class receives data via UDP and processes the incoming messages.
@@ -78,11 +81,35 @@ public class SensorDataHandler implements Runnable{
   }
 
   private static void parseAndStoreSensorData(String data){
-    System.out.println(data);
+    //System.out.println(data);
 
     JSONParser parser = new JSONParser();
     try {
-      JSONObject json = parser.parse(data);
+      Object obj = parser.parse(data);
+      JSONObject json = (JSONObject) obj;
+      System.out.println(json);
+      json.get("unit");
+
+     switch ((String) json.get("type")){
+       case "tenperature":
+         storeSensorData(json);
+         break;
+
+       case "rain":
+         storeSensorData(json);
+         break;
+
+       case "wind":
+         storeSensorData(json);
+         break;
+
+       case "humidity":
+         storeSensorData(json);
+         break;
+
+         default:
+           System.out.println("Invalid sensortype: " + json.get("type") );
+     }
 
 
     }catch (ParseException e){
@@ -90,6 +117,16 @@ public class SensorDataHandler implements Runnable{
     }
 
     //TODO: implement method
+  }
+
+  private static void storeSensorData(JSONObject jsonObject){
+    try {
+     FileWriter file = new FileWriter("./"+jsonObject.get("type"));
+     file.write(jsonObject.toString());
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Could not create or write to file");
+    }
   }
 
   @Override
