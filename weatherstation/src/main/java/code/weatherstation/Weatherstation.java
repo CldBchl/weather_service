@@ -42,7 +42,7 @@ public class Weatherstation{
         new Weatherstation(args[0], args[1], args[2], args[3], args[4]);
     System.out.println(weatherstation.stationName);
 
-    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress);
+    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress, weatherstation.stationName);
     httpServer = new HttpServer(serverPort, serverIpAddress);
 
     //launch httpServer thread

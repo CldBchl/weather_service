@@ -1,7 +1,5 @@
 package code.weatherstation;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -20,8 +18,10 @@ public class SensorDataHandler implements Runnable{
 
   private static final Logger log = Logger.getLogger( SensorDataHandler.class.getName() );
   private static DatagramSocket udpSocket;
+  private String stationName;
 
-  public SensorDataHandler(int receivePort, InetAddress receiveIpAddress){
+  public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName){
+    this.stationName = stationName;
     try {
       udpSocket = new DatagramSocket(receivePort, receiveIpAddress);
       udpSocket.setReceiveBufferSize(1024);
@@ -35,7 +35,7 @@ public class SensorDataHandler implements Runnable{
 
   }
 
-  private static void handleSensorData(){
+  private  void handleSensorData(){
     while (true) {
       String data = receiveUDPPackets();
       parseAndStoreSensorData(data);
@@ -58,8 +58,6 @@ public class SensorDataHandler implements Runnable{
         int         len     = packet.getLength();
         byte[]      data    = packet.getData();
 
-        //String dataString =;
-
         //System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
         //    address, port, dataString);
 
@@ -78,16 +76,11 @@ public class SensorDataHandler implements Runnable{
     }
   }
 
-  private static void parseAndStoreSensorData(String data){
+  private  void parseAndStoreSensorData(String data){
     //System.out.println(data);
 
       JSONObject json = new JSONObject(data);
-      String unitFix = (String) json.get("unit");
-      //String fixed = unitFix.replace("\\", "");
-      //System.out.println(fixed);
-      //json.put("unit",fixed ); //unitFix.replace("\\", "")
-      System.out.println(json.toString());
-
+      //System.out.println(json.toString());
 
      switch ((String) json.get("type")){
        case "temperature":
@@ -111,9 +104,10 @@ public class SensorDataHandler implements Runnable{
      }
   }
 
-  private static void storeSensorData(JSONObject jsonObject){
+  private  void storeSensorData(JSONObject jsonObject){
     try {
      FileWriter file = new FileWriter("./"+jsonObject.get("type")+ ".txt",true);
+     jsonObject.put("station", stationName);
      file.append(jsonObject.toString());
      file.append("\n");
      file.flush();
