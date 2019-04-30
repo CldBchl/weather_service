@@ -9,10 +9,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.json.simple.*;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+//import org.json.simple.*;
 import java.io.FileWriter;
+import org.json.*;
 
 /*
  * The SensorDataHandler class receives data via UDP and processes the incoming messages.
@@ -60,12 +59,12 @@ public class SensorDataHandler implements Runnable{
         int         len     = packet.getLength();
         byte[]      data    = packet.getData();
 
-        String dataString = new String( data, 0, len );
+        //String dataString =;
 
         //System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
         //    address, port, dataString);
 
-        return dataString;
+        return  new String( data, 0, len );
 
       }
       catch (IOException e) {
@@ -83,15 +82,16 @@ public class SensorDataHandler implements Runnable{
   private static void parseAndStoreSensorData(String data){
     //System.out.println(data);
 
-    JSONParser parser = new JSONParser();
-    try {
-      Object obj = parser.parse(data);
-      JSONObject json = (JSONObject) obj;
-      System.out.println(json);
-      json.get("unit");
+      JSONObject json = new JSONObject(data);
+      String unitFix = (String) json.get("unit");
+      //String fixed = unitFix.replace("\\", "");
+      //System.out.println(fixed);
+      //json.put("unit",fixed ); //unitFix.replace("\\", "")
+      System.out.println(json.toString());
+
 
      switch ((String) json.get("type")){
-       case "tenperature":
+       case "temperature":
          storeSensorData(json);
          break;
 
@@ -110,19 +110,14 @@ public class SensorDataHandler implements Runnable{
          default:
            System.out.println("Invalid sensortype: " + json.get("type") );
      }
-
-
-    }catch (ParseException e){
-      e.printStackTrace();
-    }
-
-    //TODO: implement method
   }
 
   private static void storeSensorData(JSONObject jsonObject){
     try {
-     FileWriter file = new FileWriter("./"+jsonObject.get("type"));
-     file.write(jsonObject.toString());
+     FileWriter file = new FileWriter("./"+jsonObject.get("type")+ ".txt",true);
+     file.append(jsonObject.toString());
+     file.append("\n");
+     file.flush();
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("Could not create or write to file");
