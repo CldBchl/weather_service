@@ -111,11 +111,13 @@ public class HttpRequestHandler extends Thread {
       try {
         socketChannel.write(byteBuffer);
         byteBuffer.clear();
+
         log.log(Level.INFO, "Server closed connection");
         key.channel().close();
         key.cancel();
       } catch (IOException e) {
         e.printStackTrace();
+        log.log(Level.WARNING, "Error when sending 200 response");
         //TODO handle error
       }
     } else {
@@ -123,19 +125,12 @@ public class HttpRequestHandler extends Thread {
         // return "404 not found" to client
 
         //read BadRequest.html into a ByteArrayOutputStream and parse it to byteBuffer
-        InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        int length;
-        byte[] buffer = new byte[1024];
-        while ((length = in.read(buffer)) != -1) {
-          result.write(buffer, 0, length);
-        }
-        String fileContent = result.toString(UTF_8.name());
-        int bodyLength = fileContent.length();
+        String fileContent= readFileToString("BadRequest.html");
         byte[] byteArrayBody = fileContent.getBytes(UTF_8);
-
+        int bodyLength = fileContent.length();
         String header = buildHttpHeader(response404, bodyLength);
 
+        //get selector-key's byte buffer
         ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
         byteBuffer.clear();
         byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
@@ -145,7 +140,7 @@ public class HttpRequestHandler extends Thread {
         byteBuffer = byteBuffer.put(byteArrayBody);
 
         byteBuffer.flip();
-        int writtenBytes = socketChannel.write(byteBuffer);
+        socketChannel.write(byteBuffer);
         byteBuffer.clear();
 
         log.log(Level.INFO, "Server closed connection");
@@ -153,6 +148,7 @@ public class HttpRequestHandler extends Thread {
         key.cancel();
       } catch (IOException e) {
         e.printStackTrace();
+        log.log(Level.WARNING, "Error when sending 404 response");
         //TODO handle error
       }
     }
@@ -172,6 +168,20 @@ public class HttpRequestHandler extends Thread {
     header += "Content-Length: " + lenght;
     header += delimiter;
     return header;
+  }
+
+  private String readFileToString( String fileName) throws IOException {
+
+    InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
+    ByteArrayOutputStream result = new ByteArrayOutputStream();
+    int length;
+    byte[] buffer = new byte[1024];
+    while ((length = in.read(buffer)) != -1) {
+      result.write(buffer, 0, length);
+    }
+    String fileContent = result.toString(UTF_8.name());
+
+    return fileContent;
   }
 
 }
