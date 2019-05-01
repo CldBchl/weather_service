@@ -6,9 +6,9 @@ trap "kill 0" EXIT
 
 echo "Starting Weatherstations:"
 # parameters Stationname IpForSensors PortForSensors IpForHttp PortForHttp
-./weatherstation/build/install/weatherstation/bin/weatherstation test  127.0.0.1 5555 127.0.0.1 5554 &
-./weatherstation/build/install/weatherstation/bin/weatherstation test1  127.0.0.1 5565 127.0.0.1 5564 &
-./weatherstation/build/install/weatherstation/bin/weatherstation test2  127.0.0.1 5575 127.0.0.1 5574 &
+./weatherstation/build/install/weatherstation/bin/weatherstation Station1  127.0.0.1 5555 127.0.0.1 5554 &
+./weatherstation/build/install/weatherstation/bin/weatherstation Station2  127.0.0.1 5565 127.0.0.1 5564 &
+./weatherstation/build/install/weatherstation/bin/weatherstation Station3  127.0.0.1 5575 127.0.0.1 5574 &
 
 
 echo "Starting Sensors:"
