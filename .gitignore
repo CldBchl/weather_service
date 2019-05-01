@@ -10,4 +10,8 @@ build
 *.DS_Store
 *.iml
 
+humidity.txt
+rain.txt
+temperature.txt
+wind.txt
 

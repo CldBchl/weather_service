@@ -1,5 +1,7 @@
 package sensor;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +20,7 @@ import java.text.DecimalFormat;
 
 public class Sensor{
 
+    private static final Logger log = Logger.getLogger(Sensor.class.getName());
     private String type;
     private InetAddress ip;
     private int port;
@@ -39,7 +42,7 @@ public class Sensor{
             this.remoteIp = InetAddress.getByName(remoteIp);
         } catch (Exception e){
             System.out.println("Enter a valid IP-Address");
-            e.printStackTrace();
+            System.exit(1);
         }
 
         // Create socket
@@ -47,29 +50,31 @@ public class Sensor{
             this.udpSocket = new DatagramSocket(this.port, this.ip);
         } catch (Exception e){
             System.out.println("Couldn't create Socket");
+            log.log(Level.WARNING, "UDP socket initialization failed");
             e.printStackTrace();
+            System.exit(2);
         }
-
     }
-
 
     /*
      * Running-loop
      */
     public void run(){
        float value = 0;
-        for (int i = 0; i<5; i++){
+        while (true) {
             try {
-                Thread.sleep(this.interval*1000); // seconds to ms
+                Thread.sleep(this.interval * 1000); // seconds to ms
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                log.log(Level.WARNING, "Thread got interrupted");
             }
             value = generateData(value);
-
         }
     }
 
-
+    /*
+     * generate Data and send it to weatherstation
+     */
     private float generateData(float lastValue) {
         // Assignments
         Random rand = new Random();
@@ -113,7 +118,7 @@ public class Sensor{
                     throw new IllegalArgumentException("Invalid type" + this.type);
         }
 
-        // Generate data
+        // Generate data with random walk
         float delta = rand.nextFloat();
         boolean bool = rand.nextBoolean();
         if (!bool) {
@@ -147,8 +152,9 @@ public class Sensor{
             this.udpSocket.send(p);
         } catch (IOException e) {
             e.printStackTrace();
+            log.log(Level.WARNING, "UDP Socktet could not send data");
+            return lastValue;
         }
-
         return lastValue;
     }
 

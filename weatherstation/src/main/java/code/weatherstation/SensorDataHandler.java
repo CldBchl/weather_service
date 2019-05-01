@@ -7,6 +7,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.io.FileWriter;
+import org.json.*;
 
 /*
  * The SensorDataHandler class receives data via UDP and processes the incoming messages.
@@ -16,8 +18,10 @@ public class SensorDataHandler implements Runnable{
 
   private static final Logger log = Logger.getLogger( SensorDataHandler.class.getName() );
   private static DatagramSocket udpSocket;
+  private String stationName;
 
-  public SensorDataHandler(int receivePort, InetAddress receiveIpAddress){
+  public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName){
+    this.stationName = stationName;
     try {
       udpSocket = new DatagramSocket(receivePort, receiveIpAddress);
       udpSocket.setReceiveBufferSize(1024);
@@ -31,15 +35,15 @@ public class SensorDataHandler implements Runnable{
 
   }
 
-  private static void handleSensorData(){
-
-    receiveUDPPackets();
-    parseAndStoreSensorData();
-
+  private  void handleSensorData(){
+    while (true) {
+      String data = receiveUDPPackets();
+      parseAndStoreSensorData(data);
+    }
   }
 
 
-  private static void receiveUDPPackets(){
+  private static String receiveUDPPackets(){
     byte[] buf = new byte[1024];
     DatagramPacket packet = new DatagramPacket(buf, 1024);
 
@@ -54,21 +58,63 @@ public class SensorDataHandler implements Runnable{
         int         len     = packet.getLength();
         byte[]      data    = packet.getData();
 
-        System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
-            address, port, new String( data, 0, len ) );
+        //System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
+        //    address, port, dataString);
+
+        return  new String( data, 0, len );
+
       }
       catch (IOException e) {
         e.printStackTrace();
         System.out.println("Error when receiving UDP packet");
         log.log(Level.WARNING, "Error when UDP receiving package");
 
+        return "error";
+
       }
+
     }
   }
 
-  private static void parseAndStoreSensorData(){
+  private  void parseAndStoreSensorData(String data){
+    //System.out.println(data);
 
-    //TODO: implement method
+      JSONObject json = new JSONObject(data);
+      //System.out.println(json.toString());
+
+     switch ((String) json.get("type")){
+       case "temperature":
+         storeSensorData(json);
+         break;
+
+       case "rain":
+         storeSensorData(json);
+         break;
+
+       case "wind":
+         storeSensorData(json);
+         break;
+
+       case "humidity":
+         storeSensorData(json);
+         break;
+
+         default:
+           System.out.println("Invalid sensortype: " + json.get("type") );
+     }
+  }
+
+  private  void storeSensorData(JSONObject jsonObject){
+    try {
+     FileWriter file = new FileWriter("./"+jsonObject.get("type")+ ".txt",true);
+     jsonObject.put("station", stationName);
+     file.append(jsonObject.toString());
+     file.append("\n");
+     file.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Could not create or write to file");
+    }
   }
 
   @Override
