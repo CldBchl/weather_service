@@ -58,10 +58,12 @@ public class SensorDataHandler implements Runnable{
         int         len     = packet.getLength();
         byte[]      data    = packet.getData();
 
-        //System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
-        //    address, port, dataString);
 
-        return  new String( data, 0, len );
+        String dataString = new String( data, 0, len );
+        System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
+            address, port, dataString);
+
+        return  dataString;
 
       }
       catch (IOException e) {
@@ -80,7 +82,7 @@ public class SensorDataHandler implements Runnable{
     //System.out.println(data);
 
       JSONObject json = new JSONObject(data);
-      //System.out.println(json.toString());
+     // System.out.println(json.toString());
 
      switch ((String) json.get("type")){
        case "temperature":
