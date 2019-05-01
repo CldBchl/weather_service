@@ -1,5 +1,7 @@
 package code.weatherstation;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,7 +10,6 @@ import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +34,6 @@ public class HttpRequestHandler extends Thread {
   }
 
   private void handleRequests() {
-    log.log(Level.INFO, "enter HandlerSocket method");
     Boolean connectionIsActive = readMessage();
     if (connectionIsActive) {
       processRequest(httpRequest);
@@ -65,7 +65,7 @@ public class HttpRequestHandler extends Thread {
 
         return true;
       } else {
-        //no meassage received --> close connection
+        //no message received --> close connection
         log.log(Level.WARNING, "Client closed connection");
         key.channel().close();
         key.cancel();
@@ -84,7 +84,7 @@ public class HttpRequestHandler extends Thread {
 
     if (method.equals("GET")) {
 
-      log.log(Level.WARNING, "Received a get request");
+      log.log(Level.INFO, "Received a get request");
       String body;
       body = "<!DOCTYPE html>";
       body += "<html>";
@@ -105,17 +105,19 @@ public class HttpRequestHandler extends Thread {
       String header = buildHttpHeader(response202, bodyLength);
 
       String httpResponse = header + body;
-      byte[] byteArray = httpResponse.getBytes(Charset.defaultCharset());
+      byte[] byteArray = httpResponse.getBytes(UTF_8);
       byteBuffer = byteBuffer.put(byteArray);
       byteBuffer.flip();
       try {
         socketChannel.write(byteBuffer);
         byteBuffer.clear();
-        log.log(Level.WARNING, "Server closed connection");
+
+        log.log(Level.INFO, "Server closed connection");
         key.channel().close();
         key.cancel();
       } catch (IOException e) {
         e.printStackTrace();
+        log.log(Level.WARNING, "Error when sending 200 response");
         //TODO handle error
       }
     } else {
@@ -123,20 +125,12 @@ public class HttpRequestHandler extends Thread {
         // return "404 not found" to client
 
         //read BadRequest.html into a ByteArrayOutputStream and parse it to byteBuffer
-        InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        int length;
-        byte[] buffer= new byte[1024];
-        while ((length=in.read(buffer)) != -1)
-        {
-          result.write(buffer, 0, length);
-        }
-        String fileContent= result.toString(StandardCharsets.UTF_8.name());
-        int bodyLength= fileContent.length();
-        byte[] byteArrayBody = fileContent.getBytes(Charset.defaultCharset());
-
+        String fileContent= readFileToString("BadRequest.html");
+        byte[] byteArrayBody = fileContent.getBytes(UTF_8);
+        int bodyLength = fileContent.length();
         String header = buildHttpHeader(response404, bodyLength);
 
+        //get selector-key's byte buffer
         ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
         byteBuffer.clear();
         byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
@@ -149,27 +143,45 @@ public class HttpRequestHandler extends Thread {
         socketChannel.write(byteBuffer);
         byteBuffer.clear();
 
-        log.log(Level.WARNING, "Server closed connection");
+        log.log(Level.INFO, "Server closed connection");
         key.channel().close();
         key.cancel();
       } catch (IOException e) {
         e.printStackTrace();
+        log.log(Level.WARNING, "Error when sending 404 response");
         //TODO handle error
       }
     }
   }
 
   private String buildHttpHeader(int code, int lenght) {
+
     String header;
+    String delimiter = "\r\n\r\n";
+
     if (code == response202) {
-      header = "HTTP/1.1 200 Ok\r\n";
+      header = "HTTP/1.1 200 OK\r\n";
     } else {
       header = "HTTP/1.1 404 Not Found\r\n";
     }
-    header += "Content-type:text/html\r\n";
-    header += "Content-length:" + lenght;
-    header += "\r\n\r\n";
+    header += "Content-Type: text/html charset=utf-8\r\n";
+    header += "Content-Length: " + lenght;
+    header += delimiter;
     return header;
+  }
+
+  private String readFileToString( String fileName) throws IOException {
+
+    InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
+    ByteArrayOutputStream result = new ByteArrayOutputStream();
+    int length;
+    byte[] buffer = new byte[1024];
+    while ((length = in.read(buffer)) != -1) {
+      result.write(buffer, 0, length);
+    }
+    String fileContent = result.toString(UTF_8.name());
+
+    return fileContent;
   }
 
 }
