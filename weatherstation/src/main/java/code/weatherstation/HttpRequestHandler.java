@@ -92,51 +92,39 @@ public class HttpRequestHandler extends Thread {
       String httpResponseBody;
 
       httpResponseBody  = httpHeader();
-      System.out.println(getDataFromEndpoint(calledEndpoint));
       httpResponseBody += httpBody(getDataFromEndpoint(calledEndpoint));
       httpResponseBody += httpFooter();
 
 
       log.log(Level.INFO, "Received a get request");
 
-      int bodyLength = httpResponseBody.length();
+      String header = buildHttpHeader(response202, httpResponseBody.getBytes().length );
 
-      ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
+      //System.out.println(httpResponseBody);
+      byte[] byteArrayBody = httpResponseBody.getBytes(UTF_8);
+      byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
+
+      ByteBuffer byteBuffer = ByteBuffer.allocate(byteArrayHeader.length + byteArrayBody.length);
       byteBuffer.clear();
 
-      String header = buildHttpHeader(response202, bodyLength);
+      byteBuffer = byteBuffer.put(byteArrayHeader);
+      byteBuffer = byteBuffer.put(byteArrayBody);
+      byteBuffer.flip();
 
-      String httpResponse = header + httpResponseBody;
-      byte[] byteArray = httpResponse.getBytes(UTF_8);
-
-
-      while (byteArray.length > 0){
-        byteBuffer = byteBuffer.put(byteArray,0,1024);
-        byteBuffer.flip();
-        try {
-          socketChannel.write();
-          byteBuffer.clear();
-
-          log.log(Level.INFO, "Server closed connection");
-          key.channel().close();
-          key.cancel();
-        } catch (IOException e) {
-          e.printStackTrace();
-          log.log(Level.WARNING, "Error when sending 200 response");
-          //TODO handle error
+      try {
+        while (byteBuffer.hasRemaining()) {
+          socketChannel.write(byteBuffer);
         }
+        byteBuffer.clear();
+
+        log.log(Level.INFO, "Server closed connection");
+        key.channel().close();
+        key.cancel();
+      } catch (IOException e) {
+        e.printStackTrace();
+        log.log(Level.WARNING, "Error when sending 200 response");
+        //TODO handle error
       }
-
-
-
-
-
-
-
-
-
-
-
     } else {
       try {
         // return "404 not found" to client
@@ -211,15 +199,22 @@ public class HttpRequestHandler extends Thread {
         sensorData = getSensorHistory("temperature");
         break;
       case "/sensors/wind/history":
+        sensorData = getSensorHistory("wind");
         break;
       case "/sensors/rain/history":
+        sensorData = getSensorHistory("rain");
         break;
       case "/sensors/humidity/history":
+        sensorData = getSensorHistory("humidity");
         break;
       case "/sensors/all":
+        sensorData += getSensorHistory("temperature") +
+        getSensorHistory("wind") + "\n" +
+        getSensorHistory("rain") + "\n" +
+        getSensorHistory("humidity");
         break;
       default:
-        sensorData = "no";
+        sensorData = "no valid endpoint";
     }
 
   return sensorData;
