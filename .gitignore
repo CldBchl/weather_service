@@ -7,7 +7,9 @@ build
 # Ignore Inteliij settings and gradle wrapper
 .idea
 gradle/*
-gradle/wrapper/*
+sensor/gradle/wrapper/*
+weatherstation/gradle/*
+sensoweatherservice/gradle/*
 *.DS_Store
 *.iml
 
