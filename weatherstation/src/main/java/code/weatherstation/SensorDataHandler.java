@@ -61,8 +61,7 @@ public class SensorDataHandler implements Runnable{
 
 
         String dataString = new String( data, 0, len );
-        //System.out.printf( "Receive data from IP %s and from port %d :%n%s%n",
-        //    address, port, dataString);
+        System.out.printf( "Receive data from IP %s and from port %d :%n%s%n", address, port, dataString);
 
         return  dataString;
 
@@ -109,8 +108,8 @@ public class SensorDataHandler implements Runnable{
 
   private  void storeSensorData(JSONObject jsonObject){
     try {
-     new File("./programmData/"+stationName).mkdirs();
-     FileWriter file = new FileWriter("./programmData/" + stationName + "/" + jsonObject.get("type")+ ".txt",true);
+     new File("./sensorData/"+stationName).mkdirs();
+     FileWriter file = new FileWriter("./sensorData/" + stationName + "/" + jsonObject.get("type")+ ".txt",true);
      //jsonObject.put("station", stationName);
      file.append(jsonObject.toString());
      file.append("\n");

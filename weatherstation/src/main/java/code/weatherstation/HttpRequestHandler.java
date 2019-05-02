@@ -70,6 +70,7 @@ public class HttpRequestHandler extends Thread {
         httpRequest = lines[0];
 
         return true;
+
       } else {
         //no message received --> close connection
         log.log(Level.WARNING, "Client closed connection");
@@ -89,167 +90,166 @@ public class HttpRequestHandler extends Thread {
     String method = tokens[0];
     String calledEndpoint =tokens[1];
 
+    // only accept http: GET
     if (method.equals("GET")){
-      String httpResponseBody;
+      resolveGet(calledEndpoint);
+    } else {
+      rejectRequest();
+    }
+  }
 
-      httpResponseBody  = httpHeader();
-      httpResponseBody += httpBody(getDataFromEndpoint(calledEndpoint));
-      httpResponseBody += httpFooter();
+  private void resolveGet(String calledEndpoint) {
+    log.log(Level.INFO, "Received a get request");
 
+    // built response body
+    String responseBody;
+    responseBody  = httpHeader();
+    responseBody += httpBody(getDataFromEndpoint(calledEndpoint));
+    responseBody += httpFooter();
 
-      log.log(Level.INFO, "Received a get request");
+    // built header with ok response with correct header length
+    String header = buildHttpHeader(response202, responseBody.getBytes().length);
 
-      String header = buildHttpHeader(response202, httpResponseBody.getBytes().length );
+    // convert strings to bytes
+    byte[] byteArrayBody = responseBody.getBytes(UTF_8);
+    byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
 
-      //System.out.println(httpResponseBody);
-      byte[] byteArrayBody = httpResponseBody.getBytes(UTF_8);
+    // initiate buffer
+    ByteBuffer byteBuffer = ByteBuffer.allocate(byteArrayHeader.length + byteArrayBody.length);
+    byteBuffer.clear();
+
+    // write complete response into buffer
+    byteBuffer = byteBuffer.put(byteArrayHeader);
+    byteBuffer = byteBuffer.put(byteArrayBody);
+    byteBuffer.flip();
+
+    try {
+      // send byteBuffer
+      while (byteBuffer.hasRemaining()) {
+        socketChannel.write(byteBuffer);
+      }
+
+      // clean up and close connection
+      byteBuffer.clear();
+      log.log(Level.INFO, "Server closed connection");
+      key.channel().close();
+      key.cancel();
+    } catch (IOException e) {
+      e.printStackTrace();
+      log.log(Level.WARNING, "Error when sending 200 response");
+    }
+  }
+
+  private void rejectRequest() {
+    try {
+      // return "404 not found" to client
+
+      //read BadRequest.html into a ByteArrayOutputStream and parse it to byteBuffer
+      String fileContent= readFileToString("BadRequest.html");
+      byte[] byteArrayBody = fileContent.getBytes(UTF_8);
+      int bodyLength = fileContent.length();
+      String header = buildHttpHeader(response404, bodyLength);
+
+      //get selector-key's byte buffer
+      ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
+      byteBuffer.clear();
       byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
 
-      ByteBuffer byteBuffer = ByteBuffer.allocate(byteArrayHeader.length + byteArrayBody.length);
-      byteBuffer.clear();
-
+      //add header and body to byteBuffer
       byteBuffer = byteBuffer.put(byteArrayHeader);
       byteBuffer = byteBuffer.put(byteArrayBody);
+
       byteBuffer.flip();
+      socketChannel.write(byteBuffer);
+      byteBuffer.clear();
 
-      try {
-        while (byteBuffer.hasRemaining()) {
-          socketChannel.write(byteBuffer);
-        }
-        byteBuffer.clear();
-
-        log.log(Level.INFO, "Server closed connection");
-        key.channel().close();
-        key.cancel();
-      } catch (IOException e) {
-        e.printStackTrace();
-        log.log(Level.WARNING, "Error when sending 200 response");
-        //TODO handle error
-      }
-    } else {
-      try {
-        // return "404 not found" to client
-
-        //read BadRequest.html into a ByteArrayOutputStream and parse it to byteBuffer
-        String fileContent= readFileToString("BadRequest.html");
-        byte[] byteArrayBody = fileContent.getBytes(UTF_8);
-        int bodyLength = fileContent.length();
-        String header = buildHttpHeader(response404, bodyLength);
-
-        //get selector-key's byte buffer
-        ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
-        byteBuffer.clear();
-        byte[] byteArrayHeader = header.getBytes(Charset.defaultCharset());
-
-        //add header and body to byteBuffer
-        byteBuffer = byteBuffer.put(byteArrayHeader);
-        byteBuffer = byteBuffer.put(byteArrayBody);
-
-        byteBuffer.flip();
-        socketChannel.write(byteBuffer);
-        byteBuffer.clear();
-
-        log.log(Level.INFO, "Server closed connection");
-        key.channel().close();
-        key.cancel();
-      } catch (IOException e) {
-        e.printStackTrace();
-        log.log(Level.WARNING, "Error when sending 404 response");
-        //TODO handle error
-      }
+      log.log(Level.INFO, "Server closed connection");
+      key.channel().close();
+      key.cancel();
+    } catch (IOException e) {
+      e.printStackTrace();
+      log.log(Level.WARNING, "Error when sending 404 response");
     }
   }
 
   private String httpHeader() {
-    String header;
-    header  = "<!DOCTYPE html>"
+    return    "<!DOCTYPE html>\n"
             + "<html>\n"
             + "<head>\n"
             + "\t<meta charset=\"UTF-8\">\n"
             + "\t<title>Sensor data</title>\n"
-            + "</head>";
-    return header;
+            + "</head>\n";
   }
 
   private String httpBody(String bodyData){
-    String body;
-    body  = "<body>\n"
-          + bodyData
-          + "</body>\n";
-    return body;
+    return    "<body>\n"
+            + bodyData
+            + "</body>\n";
   }
 
   private String httpFooter(){
-    String footer;
-    footer = "</html>";
-    return footer;
+    return "</html>";
   }
 
   private String getDataFromEndpoint(String calledEndpoint) {
-    String sensorData = "no Data";
     switch (calledEndpoint){
+
       case "/sensors/temperature/current":
-        sensorData = getSensorCurrent("temperature");
-        break;
+        return getSensorCurrent("temperature");
+
       case "/sensors/wind/current":
-        sensorData = getSensorCurrent("wind");
-        break;
+        return getSensorCurrent("wind");
+
       case "/sensors/rain/current":
-        sensorData = getSensorCurrent("rain");
-        break;
+        return getSensorCurrent("rain");
+
       case "/sensors/humidity/current":
-        sensorData = getSensorCurrent("humidity");
-        break;
+        return getSensorCurrent("humidity");
+
       case "/sensors/temperature/history":
-        sensorData = getSensorHistory("temperature");
-        break;
+        return getSensorHistory("temperature");
+
       case "/sensors/wind/history":
-        sensorData = getSensorHistory("wind");
-        break;
+        return getSensorHistory("wind");
+
       case "/sensors/rain/history":
-        sensorData = getSensorHistory("rain");
-        break;
+        return getSensorHistory("rain");
+
       case "/sensors/humidity/history":
-        sensorData = getSensorHistory("humidity");
-        break;
+        return  getSensorHistory("humidity");
       case "/sensors/all/current":
-        sensorData =  getSensorCurrent("temperature") +
+        return  getSensorCurrent("temperature") +
                 getSensorCurrent("wind") +
                 getSensorCurrent("rain") +
                 getSensorCurrent("humidity");
-        break;
-      case "/sensors/all/history":
-        sensorData =  getSensorHistory("temperature") +
-                      getSensorHistory("wind") +
-                      getSensorHistory("rain") +
-                      getSensorHistory("humidity");
-        break;
-      default:
-        sensorData = "no valid endpoint";
-    }
 
-  return sensorData;
+      case "/sensors/all/history":
+        return  getSensorHistory("temperature") +
+                getSensorHistory("wind") +
+                getSensorHistory("rain") +
+                getSensorHistory("humidity");
+
+      default:
+        return "no valid endpoint";
+    }
   }
 
   private String getSensorCurrent(String sensorType){
     StringBuilder sensorData = new StringBuilder();
-    String line;
 
     try{
-      File file = new File("./programmData/" + weatherstation + "/" + sensorType+ ".txt");
+      File file = new File("./sensorData/" + weatherstation + "/" + sensorType+ ".txt");
       ReversedLinesFileReader rf = new ReversedLinesFileReader(file, UTF_8);
-      //while ((line = br.readLine()) != null){
 
-        sensorData.append(rf.readLine());
-        sensorData.append(System.lineSeparator());
-      //}
+      sensorData.append(rf.readLine());
+      sensorData.append(System.lineSeparator());
 
       return sensorData.toString();
 
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("Could not create or write to file");
-      return "error";
+      return "No file";
     }
   }
 
@@ -258,7 +258,7 @@ public class HttpRequestHandler extends Thread {
     String line;
 
     try{
-      File file = new File("./programmData/" + weatherstation + "/" + sensorType+ ".txt");
+      File file = new File("./sensorData/" + weatherstation + "/" + sensorType+ ".txt");
       BufferedReader br = new BufferedReader(new FileReader(file));
 
       while ((line = br.readLine()) != null){
@@ -271,14 +271,13 @@ public class HttpRequestHandler extends Thread {
   } catch (IOException e) {
     e.printStackTrace();
     System.out.println("Could not create or write to file");
-    return "error";
+    return "No file";
   }
 
 }
 
 
-  private String buildHttpHeader(int code, int lenght) {
-
+  private String buildHttpHeader(int code, int length) {
     String header;
     String delimiter = "\r\n\r\n";
 
@@ -288,27 +287,21 @@ public class HttpRequestHandler extends Thread {
       header = "HTTP/1.1 404 Not Found\r\n";
     }
     header += "Content-Type: text/html charset=utf-8\r\n";
-    header += "Content-Length: " + lenght;
+    header += "Content-Length: " + length;
     header += delimiter;
     return header;
   }
 
   private String readFileToString( String fileName) throws IOException {
-
     InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
-    ByteArrayOutputStream result = new ByteArrayOutputStream();
+    ByteArrayOutputStream fileContent = new ByteArrayOutputStream();
     int length;
     byte[] buffer = new byte[1024];
+
     while ((length = in.read(buffer)) != -1) {
-      result.write(buffer, 0, length);
+      fileContent.write(buffer, 0, length);
     }
-    String fileContent = result.toString(UTF_8.name());
 
-    return fileContent;
+    return fileContent.toString(UTF_8.name());
   }
-
 }
-
-
-
-;

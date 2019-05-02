@@ -14,4 +14,4 @@ humidity.txt
 rain.txt
 temperature.txt
 wind.txt
-programData/*
+sensorData/*
