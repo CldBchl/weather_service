@@ -4,12 +4,14 @@
 # Ignore Gradle build output directory
 build
 
+# Ignore Inteliij settings and gradle wrapper
 .idea
 gradle/*
-
+*/gradle/*
 *.DS_Store
 *.iml
 
+# Ignore generated files
 humidity.txt
 rain.txt
 temperature.txt
