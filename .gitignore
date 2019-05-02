@@ -7,7 +7,7 @@ build
 # Ignore Inteliij settings and gradle wrapper
 .idea
 gradle/*
-*/gradle/*
+gradle/wrapper*
 *.DS_Store
 *.iml
 
