@@ -15,6 +15,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.input.ReversedLinesFileReader;
 
 /*
  * The HttpRequestHandler class handles incoming http requests.
@@ -188,12 +189,16 @@ public class HttpRequestHandler extends Thread {
     String sensorData = "no Data";
     switch (calledEndpoint){
       case "/sensors/temperature/current":
+        sensorData = getSensorCurrent("temperature");
         break;
       case "/sensors/wind/current":
+        sensorData = getSensorCurrent("wind");
         break;
       case "/sensors/rain/current":
+        sensorData = getSensorCurrent("rain");
         break;
       case "/sensors/humidity/current":
+        sensorData = getSensorCurrent("humidity");
         break;
       case "/sensors/temperature/history":
         sensorData = getSensorHistory("temperature");
@@ -207,17 +212,45 @@ public class HttpRequestHandler extends Thread {
       case "/sensors/humidity/history":
         sensorData = getSensorHistory("humidity");
         break;
-      case "/sensors/all":
-        sensorData += getSensorHistory("temperature") +
-        getSensorHistory("wind") + "\n" +
-        getSensorHistory("rain") + "\n" +
-        getSensorHistory("humidity");
+      case "/sensors/all/current":
+        sensorData =  getSensorCurrent("temperature") +
+                getSensorCurrent("wind") +
+                getSensorCurrent("rain") +
+                getSensorCurrent("humidity");
+        break;
+      case "/sensors/all/history":
+        sensorData =  getSensorHistory("temperature") +
+                      getSensorHistory("wind") +
+                      getSensorHistory("rain") +
+                      getSensorHistory("humidity");
         break;
       default:
         sensorData = "no valid endpoint";
     }
 
   return sensorData;
+  }
+
+  private String getSensorCurrent(String sensorType){
+    StringBuilder sensorData = new StringBuilder();
+    String line;
+
+    try{
+      File file = new File("./programmData/" + weatherstation + "/" + sensorType+ ".txt");
+      ReversedLinesFileReader rf = new ReversedLinesFileReader(file, UTF_8);
+      //while ((line = br.readLine()) != null){
+
+        sensorData.append(rf.readLine());
+        sensorData.append(System.lineSeparator());
+      //}
+
+      return sensorData.toString();
+
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Could not create or write to file");
+      return "error";
+    }
   }
 
   private String getSensorHistory(String sensorType){
