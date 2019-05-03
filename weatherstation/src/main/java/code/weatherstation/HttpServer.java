@@ -28,11 +28,14 @@ public class HttpServer implements Runnable {
   private static Socket server;
   private static int backlog = 1024;
   private static Selector selector;
+  private String weatherstation;
 
-  public HttpServer(int port, InetAddress ip) {
+  public HttpServer(int port, InetAddress ip, String weatherstationName) {
     try {
+      weatherstation = weatherstationName;
       serverIpAddress = ip;
       serverPort = port;
+
       //serverSocket accepts incoming requests and passes them to new httpRequestHandler
       //  serverSocket = new ServerSocket(serverPort, backlog, serverIpAddress);
       log.log(Level.INFO, "Successful serverSocket socket creation");
@@ -84,7 +87,7 @@ public class HttpServer implements Runnable {
               //remove interest in read readiness option while channel is serviced
               key.interestOps(key.interestOps(  ) & (~SelectionKey.OP_READ));
               HttpRequestHandler handler;
-              handler = new HttpRequestHandler(key);
+              handler = new HttpRequestHandler(key, weatherstation);
               //launch new thread for handling the http request
               handler.start();
             }

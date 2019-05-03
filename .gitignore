@@ -4,14 +4,18 @@
 # Ignore Gradle build output directory
 build
 
+# Ignore Inteliij settings and gradle wrapper
 .idea
-.gradle
-
+gradle/*
+sensor/gradle/wrapper/*
+weatherstation/gradle/*
+sensoweatherservice/gradle/*
 *.DS_Store
 *.iml
 
+# Ignore generated files
 humidity.txt
 rain.txt
 temperature.txt
 wind.txt
-
+sensorData/*
