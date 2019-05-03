@@ -158,4 +158,24 @@ public class Sensor{
         return lastValue;
     }
 
+
+    /*
+     * Demo-mode loop
+     */
+    public void demoRun(){
+        float value = 0;
+        int repeatLoop=5;
+        while (repeatLoop>0) {
+            try {
+                Thread.sleep(this.interval * 1000); // seconds to ms
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                log.log(Level.WARNING, "Thread got interrupted");
+            }
+            value = generateData(value);
+            repeatLoop-=1;
+        }
+        log.log(Level.INFO, "Sensor "+type+" finished demo.");
+    }
+
 }
