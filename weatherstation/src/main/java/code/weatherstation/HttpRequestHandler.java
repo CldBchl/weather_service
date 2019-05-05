@@ -57,7 +57,7 @@ public class HttpRequestHandler implements Runnable {
     try {
       ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
       byteBuffer.clear();
-      if (socketChannel.isOpen()) {
+
         int bytesRead = socketChannel.read(byteBuffer);
 
         if (bytesRead > 0) {
@@ -78,9 +78,6 @@ public class HttpRequestHandler implements Runnable {
           key.cancel();
           return false;
         }
-      }
-      log.log(Level.WARNING, "Channel closed early");
-      return false;
     } catch (IOException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "Http message could not be read");
