@@ -21,11 +21,11 @@ import org.apache.commons.io.input.ReversedLinesFileReader;
  * The HttpRequestHandler class handles incoming http requests.
  */
 
-public class HttpRequestHandler extends Thread {
+public class HttpRequestHandler implements Runnable {
 
   private static final Logger log = Logger.getLogger(HttpRequestHandler.class.getName());
-  private static SocketChannel socketChannel;
-  private static SelectionKey key;
+  private SocketChannel socketChannel;
+  private SelectionKey key;
 
   private String httpRequest;
   private int response202 = 202;
@@ -36,6 +36,7 @@ public class HttpRequestHandler extends Thread {
     key = k;
     weatherstation = weatherstationName;
     socketChannel = (SocketChannel) key.channel();
+
     log.log(Level.INFO, "Successful handlerSocket creation");
   }
 
@@ -43,13 +44,12 @@ public class HttpRequestHandler extends Thread {
     Boolean connectionIsActive = readMessage();
     if (connectionIsActive) {
       processRequest(httpRequest);
-      //set key to check readiness to read
-      //key.interestOps(SelectionKey.OP_READ);
     }
   }
 
   @Override
   public void run() {
+
     handleRequests();
   }
 
@@ -57,41 +57,42 @@ public class HttpRequestHandler extends Thread {
     try {
       ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
       byteBuffer.clear();
-      int bytesRead = socketChannel.read(byteBuffer);
 
-      if (bytesRead > 0) {
-        //flips buffer from read to write mode
-        byteBuffer.flip();
-        CharBuffer charBuffer = Charset.defaultCharset().newDecoder().decode(byteBuffer);
+        int bytesRead = socketChannel.read(byteBuffer);
 
-        String message = charBuffer.toString();
+        if (bytesRead > 0) {
+          //flips buffer from read to write mode
+          byteBuffer.flip();
+          CharBuffer charBuffer = Charset.defaultCharset().newDecoder().decode(byteBuffer);
 
-        String[] lines = message.split("\r\n");
-        httpRequest = lines[0];
+          String message = charBuffer.toString();
 
-        return true;
+          String[] lines = message.split("\r\n");
+          httpRequest = lines[0];
 
-      } else {
-        //no message received --> close connection
-        log.log(Level.WARNING, "Client closed connection");
-        key.channel().close();
-        key.cancel();
-        return false;
-      }
+          return true;
+        } else {
+          //no message received --> close connection
+          log.log(Level.WARNING, "Client closed connection");
+          key.channel().close();
+          key.cancel();
+          return false;
+        }
     } catch (IOException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "Http message could not be read");
-      return null;
+      return false;
     }
   }
+
 
   private void processRequest(String request) {
     String[] tokens = request.split(" ");
     String method = tokens[0];
-    String calledEndpoint =tokens[1];
+    String calledEndpoint = tokens[1];
 
     // only accept http: GET
-    if (method.equals("GET")){
+    if (method.equals("GET")) {
       resolveGet(calledEndpoint);
     } else {
       rejectRequest();
@@ -103,7 +104,7 @@ public class HttpRequestHandler extends Thread {
 
     // built response body
     String responseBody;
-    responseBody  = httpHeader();
+    responseBody = httpHeader();
     responseBody += httpBody(getDataFromEndpoint(calledEndpoint));
     responseBody += httpFooter();
 
@@ -145,7 +146,7 @@ public class HttpRequestHandler extends Thread {
       // return "404 not found" to client
 
       //read BadRequest.html into a ByteArrayOutputStream and parse it to byteBuffer
-      String fileContent= readFileToString("BadRequest.html");
+      String fileContent = readFileToString("BadRequest.html");
       byte[] byteArrayBody = fileContent.getBytes(UTF_8);
       int bodyLength = fileContent.length();
       String header = buildHttpHeader(response404, bodyLength);
@@ -173,26 +174,26 @@ public class HttpRequestHandler extends Thread {
   }
 
   private String httpHeader() {
-    return    "<!DOCTYPE html>\n"
-            + "<html>\n"
-            + "<head>\n"
-            + "\t<meta charset=\"UTF-8\">\n"
-            + "\t<title>Sensor data</title>\n"
-            + "</head>\n";
+    return "<!DOCTYPE html>\n"
+        + "<html>\n"
+        + "<head>\n"
+        + "\t<meta charset=\"UTF-8\">\n"
+        + "\t<title>Sensor data</title>\n"
+        + "</head>\n";
   }
 
-  private String httpBody(String bodyData){
-    return    "<body>\n"
-            + bodyData
-            + "</body>\n";
+  private String httpBody(String bodyData) {
+    return "<body>\n"
+        + bodyData
+        + "</body>\n";
   }
 
-  private String httpFooter(){
+  private String httpFooter() {
     return "</html>";
   }
 
   private String getDataFromEndpoint(String calledEndpoint) {
-    switch (calledEndpoint){
+    switch (calledEndpoint) {
 
       case "/sensors/temperature/current":
         return getSensorCurrent("temperature");
@@ -216,29 +217,29 @@ public class HttpRequestHandler extends Thread {
         return getSensorHistory("rain");
 
       case "/sensors/humidity/history":
-        return  getSensorHistory("humidity");
+        return getSensorHistory("humidity");
       case "/sensors/all/current":
-        return  getSensorCurrent("temperature") +
-                getSensorCurrent("wind") +
-                getSensorCurrent("rain") +
-                getSensorCurrent("humidity");
+        return getSensorCurrent("temperature") +
+            getSensorCurrent("wind") +
+            getSensorCurrent("rain") +
+            getSensorCurrent("humidity");
 
       case "/sensors/all/history":
-        return  getSensorHistory("temperature") +
-                getSensorHistory("wind") +
-                getSensorHistory("rain") +
-                getSensorHistory("humidity");
+        return getSensorHistory("temperature") +
+            getSensorHistory("wind") +
+            getSensorHistory("rain") +
+            getSensorHistory("humidity");
 
       default:
         return "no valid endpoint";
     }
   }
 
-  private String getSensorCurrent(String sensorType){
+  private String getSensorCurrent(String sensorType) {
     StringBuilder sensorData = new StringBuilder();
 
-    try{
-      File file = new File("./sensorData/" + weatherstation + "/" + sensorType+ ".txt");
+    try {
+      File file = new File("./sensorData/" + weatherstation + "/" + sensorType + ".txt");
       ReversedLinesFileReader rf = new ReversedLinesFileReader(file, UTF_8);
 
       sensorData.append(rf.readLine());
@@ -253,28 +254,28 @@ public class HttpRequestHandler extends Thread {
     }
   }
 
-  private String getSensorHistory(String sensorType){
+  private String getSensorHistory(String sensorType) {
     StringBuilder sensorData = new StringBuilder();
     String line;
 
-    try{
-      File file = new File("./sensorData/" + weatherstation + "/" + sensorType+ ".txt");
+    try {
+      File file = new File("./sensorData/" + weatherstation + "/" + sensorType + ".txt");
       BufferedReader br = new BufferedReader(new FileReader(file));
 
-      while ((line = br.readLine()) != null){
+      while ((line = br.readLine()) != null) {
         sensorData.append(line);
         sensorData.append(System.lineSeparator());
       }
 
       return sensorData.toString();
 
-  } catch (IOException e) {
-    e.printStackTrace();
-    System.out.println("Could not create or write to file");
-    return "No file";
-  }
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Could not create or write to file");
+      return "No file";
+    }
 
-}
+  }
 
 
   private String buildHttpHeader(int code, int length) {
@@ -292,7 +293,7 @@ public class HttpRequestHandler extends Thread {
     return header;
   }
 
-  private String readFileToString( String fileName) throws IOException {
+  private String readFileToString(String fileName) throws IOException {
     InputStream in = getClass().getClassLoader().getResourceAsStream("BadRequest.html");
     ByteArrayOutputStream fileContent = new ByteArrayOutputStream();
     int length;

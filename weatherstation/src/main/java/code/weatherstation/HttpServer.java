@@ -26,7 +26,7 @@ public class HttpServer implements Runnable {
   private static int serverPort;
   private static ServerSocket serverSocket;
   private static Socket server;
-  private static int backlog = 1024;
+  private static int backlog = 50;
   private static Selector selector;
   private String weatherstation;
 
@@ -37,7 +37,6 @@ public class HttpServer implements Runnable {
       serverPort = port;
 
       //serverSocket accepts incoming requests and passes them to new httpRequestHandler
-      //  serverSocket = new ServerSocket(serverPort, backlog, serverIpAddress);
       log.log(Level.INFO, "Successful serverSocket socket creation");
 
       selector = Selector.open();
@@ -58,7 +57,7 @@ public class HttpServer implements Runnable {
       ServerSocketChannel serverChannel = ServerSocketChannel.open();
       serverSocket = serverChannel.socket();
       InetSocketAddress socketAddress = new InetSocketAddress(serverIpAddress, serverPort);
-      serverSocket.bind(socketAddress);
+      serverSocket.bind(socketAddress, backlog);
 
       serverChannel.configureBlocking(false);
 
@@ -74,7 +73,7 @@ public class HttpServer implements Runnable {
 
         Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
 
-        while(keyIterator.hasNext()) {
+        while (keyIterator.hasNext()) {
 
           SelectionKey key = keyIterator.next();
 
@@ -85,11 +84,12 @@ public class HttpServer implements Runnable {
             }
             if (key.isReadable()) {
               //remove interest in read readiness option while channel is serviced
-              key.interestOps(key.interestOps(  ) & (~SelectionKey.OP_READ));
-              HttpRequestHandler handler;
-              handler = new HttpRequestHandler(key, weatherstation);
+              key.interestOps(key.interestOps() & (~SelectionKey.OP_READ));
+
               //launch new thread for handling the http request
-              handler.start();
+              Runnable runnable = new HttpRequestHandler(key, weatherstation);
+              Thread thread = new Thread(runnable);
+              thread.start();
             }
           }
 
@@ -120,7 +120,7 @@ public class HttpServer implements Runnable {
       System.out.println("Accepted connection with client" + client);
 
       ByteBuffer buffer = ByteBuffer.allocate(1024);
-      ///TODO: is write notify necessary?
+
       client.register(selector, SelectionKey.OP_READ, buffer);
 
       int status = key.interestOps();
@@ -129,8 +129,6 @@ public class HttpServer implements Runnable {
       e.printStackTrace();
       log.log(Level.WARNING, "Error accepting connection");
     }
-
   }
-
 
 }
