@@ -9,10 +9,12 @@
 
 ## Performancetest
 
-- Testbeschreibung: Es soll über Apache Bench getestet werden, wieviel Requests pro Sekunde bearbeitet werden können und ob der Server auch parallele Anfragen verarbeiten kann.
-Dafür führen wir den Befehl "ab -n 5000 -c 100 127.0.0.1:5554/"
+- Testbeschreibung: Es soll über Apache Bench getestet werden, wieviele Requests pro Sekunde bearbeitet werden können und ob der Server auch parallele Anfragen verarbeiten kann.
+Dafür führen wir den Befehl "ab -n 5000 -c 100 127.0.0.1:5554/" aus.
 - Erwartete Testergebnisse: Wir erwarten 10'000 Requests/ pro Sekunde und erwarten, dass unser Server bis zu 50 gleichzeitige Anfragen verarbeiten kann. 
 - Ergebnisse: Die Erwartungen bezüglich der Performance werden nicht erfüllt, denn wir schaffen nur rund 2'000 Requests in der Sekunde. Unsere Erwartungen bezüglich Concurrency werden erfüllt. 
+
+Ausschnitt aus dem ApacheBench Testreport:
 
 Server Software:        
 Server Hostname:        127.0.0.1
