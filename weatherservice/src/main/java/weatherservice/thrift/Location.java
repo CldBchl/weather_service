@@ -4,7 +4,7 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-package code.weatherstation;
+package weatherservice.thrift;
 
 @SuppressWarnings({"cast", "rawtypes", "serial", "unchecked", "unused"})
 /**
@@ -24,10 +24,10 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
   private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new LocationTupleSchemeFactory();
 
   public byte locationID; // required
-  public @org.apache.thrift.annotation.Nullable String name; // required
+  public @org.apache.thrift.annotation.Nullable java.lang.String name; // required
   public double latitude; // required
   public double longitude; // required
-  public @org.apache.thrift.annotation.Nullable String description; // optional
+  public @org.apache.thrift.annotation.Nullable java.lang.String description; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -37,7 +37,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
     LONGITUDE((short)4, "longitude"),
     DESCRIPTION((short)5, "description");
 
-    private static final java.util.Map<String, _Fields> byName = new java.util.HashMap<String, _Fields>();
+    private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
     static {
       for (_Fields field : java.util.EnumSet.allOf(_Fields.class)) {
@@ -72,7 +72,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
      */
     public static _Fields findByThriftIdOrThrow(int fieldId) {
       _Fields fields = findByThriftId(fieldId);
-      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      if (fields == null) throw new java.lang.IllegalArgumentException("Field " + fieldId + " doesn't exist!");
       return fields;
     }
 
@@ -80,14 +80,14 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
      * Find the _Fields constant that matches name, or null if its not found.
      */
     @org.apache.thrift.annotation.Nullable
-    public static _Fields findByName(String name) {
+    public static _Fields findByName(java.lang.String name) {
       return byName.get(name);
     }
 
     private final short _thriftId;
-    private final String _fieldName;
+    private final java.lang.String _fieldName;
 
-    _Fields(short thriftId, String fieldName) {
+    _Fields(short thriftId, java.lang.String fieldName) {
       _thriftId = thriftId;
       _fieldName = fieldName;
     }
@@ -96,7 +96,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
       return _thriftId;
     }
 
-    public String getFieldName() {
+    public java.lang.String getFieldName() {
       return _fieldName;
     }
   }
@@ -110,15 +110,15 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
   public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.LOCATION_ID, new org.apache.thrift.meta_data.FieldMetaData("locationID", org.apache.thrift.TFieldRequirementType.DEFAULT,
+    tmpMap.put(_Fields.LOCATION_ID, new org.apache.thrift.meta_data.FieldMetaData("locationID", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BYTE)));
-    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT,
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.LATITUDE, new org.apache.thrift.meta_data.FieldMetaData("latitude", org.apache.thrift.TFieldRequirementType.DEFAULT,
+    tmpMap.put(_Fields.LATITUDE, new org.apache.thrift.meta_data.FieldMetaData("latitude", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE)));
-    tmpMap.put(_Fields.LONGITUDE, new org.apache.thrift.meta_data.FieldMetaData("longitude", org.apache.thrift.TFieldRequirementType.DEFAULT,
+    tmpMap.put(_Fields.LONGITUDE, new org.apache.thrift.meta_data.FieldMetaData("longitude", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE)));
-    tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL,
+    tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Location.class, metaDataMap);
@@ -129,7 +129,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
 
   public Location(
     byte locationID,
-    String name,
+    java.lang.String name,
     double latitude,
     double longitude)
   {
@@ -199,11 +199,11 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
   }
 
   @org.apache.thrift.annotation.Nullable
-  public String getName() {
+  public java.lang.String getName() {
     return this.name;
   }
 
-  public Location setName(@org.apache.thrift.annotation.Nullable String name) {
+  public Location setName(@org.apache.thrift.annotation.Nullable java.lang.String name) {
     this.name = name;
     return this;
   }
@@ -270,11 +270,11 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
   }
 
   @org.apache.thrift.annotation.Nullable
-  public String getDescription() {
+  public java.lang.String getDescription() {
     return this.description;
   }
 
-  public Location setDescription(@org.apache.thrift.annotation.Nullable String description) {
+  public Location setDescription(@org.apache.thrift.annotation.Nullable java.lang.String description) {
     this.description = description;
     return this;
   }
@@ -294,13 +294,13 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
     }
   }
 
-  public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable Object value) {
+  public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
     switch (field) {
     case LOCATION_ID:
       if (value == null) {
         unsetLocationID();
       } else {
-        setLocationID((Byte)value);
+        setLocationID((java.lang.Byte)value);
       }
       break;
 
@@ -308,7 +308,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
       if (value == null) {
         unsetName();
       } else {
-        setName((String)value);
+        setName((java.lang.String)value);
       }
       break;
 
@@ -316,7 +316,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
       if (value == null) {
         unsetLatitude();
       } else {
-        setLatitude((Double)value);
+        setLatitude((java.lang.Double)value);
       }
       break;
 
@@ -324,7 +324,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
       if (value == null) {
         unsetLongitude();
       } else {
-        setLongitude((Double)value);
+        setLongitude((java.lang.Double)value);
       }
       break;
 
@@ -332,7 +332,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
       if (value == null) {
         unsetDescription();
       } else {
-        setDescription((String)value);
+        setDescription((java.lang.String)value);
       }
       break;
 
@@ -340,7 +340,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
   }
 
   @org.apache.thrift.annotation.Nullable
-  public Object getFieldValue(_Fields field) {
+  public java.lang.Object getFieldValue(_Fields field) {
     switch (field) {
     case LOCATION_ID:
       return getLocationID();
@@ -358,13 +358,13 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
       return getDescription();
 
     }
-    throw new IllegalStateException();
+    throw new java.lang.IllegalStateException();
   }
 
   /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
-      throw new IllegalArgumentException();
+      throw new java.lang.IllegalArgumentException();
     }
 
     switch (field) {
@@ -379,11 +379,11 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
     case DESCRIPTION:
       return isSetDescription();
     }
-    throw new IllegalStateException();
+    throw new java.lang.IllegalStateException();
   }
 
   @Override
-  public boolean equals(Object that) {
+  public boolean equals(java.lang.Object that) {
     if (that == null)
       return false;
     if (that instanceof Location)
@@ -474,7 +474,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
 
     int lastComparison = 0;
 
-    lastComparison = Boolean.valueOf(isSetLocationID()).compareTo(other.isSetLocationID());
+    lastComparison = java.lang.Boolean.valueOf(isSetLocationID()).compareTo(other.isSetLocationID());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -484,7 +484,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetName()).compareTo(other.isSetName());
+    lastComparison = java.lang.Boolean.valueOf(isSetName()).compareTo(other.isSetName());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -494,7 +494,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetLatitude()).compareTo(other.isSetLatitude());
+    lastComparison = java.lang.Boolean.valueOf(isSetLatitude()).compareTo(other.isSetLatitude());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -504,7 +504,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetLongitude()).compareTo(other.isSetLongitude());
+    lastComparison = java.lang.Boolean.valueOf(isSetLongitude()).compareTo(other.isSetLongitude());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -514,7 +514,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetDescription()).compareTo(other.isSetDescription());
+    lastComparison = java.lang.Boolean.valueOf(isSetDescription()).compareTo(other.isSetDescription());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -541,8 +541,8 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
   }
 
   @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder("Location(");
+  public java.lang.String toString() {
+    java.lang.StringBuilder sb = new java.lang.StringBuilder("Location(");
     boolean first = true;
 
     sb.append("locationID:");
@@ -591,7 +591,7 @@ public class Location implements org.apache.thrift.TBase<Location, Location._Fie
     }
   }
 
-  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, java.lang.ClassNotFoundException {
     try {
       // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
       __isset_bitfield = 0;
