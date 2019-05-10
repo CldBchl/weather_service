@@ -7,16 +7,22 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class Weatherservice {
+private InetAddress ipAddress;
+private int port;
+private String name;
+
 
     public Weatherservice(String n, String receiveIP, String receiveP, String serverIP, String serverP) {
-        stationName = n;
+        name = n;
+
+
         try {
-            receiveIpAddress = InetAddress.getByName(receiveIP);
+            ipAddress = InetAddress.getByName(receiveIP);
             serverIpAddress = InetAddress.getByName(serverIP);
         } catch (UnknownHostException e) {
             System.out.println("Please enter a valid IP-Address");
         }
-        receivePort = Integer.parseInt(receiveP);
+        port = Integer.parseInt(receiveP);
         serverPort = Integer.parseInt(serverP);
     }
 
