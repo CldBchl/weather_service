@@ -3,31 +3,22 @@
  */
 package weatherservice;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 public class Weatherservice {
-private InetAddress ipAddress;
 private int port;
 private String name;
 
-
-    public Weatherservice(String n, String receiveIP, String receiveP, String serverIP, String serverP) {
-        name = n;
-
-
-        try {
-            ipAddress = InetAddress.getByName(receiveIP);
-            serverIpAddress = InetAddress.getByName(serverIP);
-        } catch (UnknownHostException e) {
-            System.out.println("Please enter a valid IP-Address");
-        }
-        port = Integer.parseInt(receiveP);
-        serverPort = Integer.parseInt(serverP);
+    public Weatherservice(String name, String port) {
+        this.name = name;
+        this.port = Integer.parseInt(port);
     }
 
-
     public static void main(String[] args)  {
-        System.out.println("weatherservice");
+        Weatherservice weatherservice = new Weatherservice(args[0],args[1]);
+        System.out.println(weatherservice.name);
+
+        RpcServer rpcServer = new RpcServer(weatherservice.port);
+        Thread rpcServerThread = new Thread(rpcServer);
+        rpcServerThread.start();
     }
 }
