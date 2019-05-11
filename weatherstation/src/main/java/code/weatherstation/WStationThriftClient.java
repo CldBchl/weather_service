@@ -10,12 +10,12 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 
 public class WStationThriftClient {
   private static final Logger log = Logger.getLogger( WStationThriftClient.class.getName());
+
   //TFramedTransport is needed with non-blocking servers
   private TFramedTransport tFramedTransport;
   private String stationName;
@@ -29,21 +29,19 @@ public class WStationThriftClient {
 
     log.log(Level.INFO, "enter thrift client");
     stationName=sName;
-    TTransport transport=new TSocket(serverIP,Integer.parseInt(serverPort));
-    tFramedTransport= new TFramedTransport(transport);
+    tFramedTransport= new TFramedTransport(new TSocket(serverIP,Integer.parseInt(serverPort)));
     protocol= new TJSONProtocol(tFramedTransport);
     weatherClient= new Client(protocol);
     log.log(Level.INFO, "going on in  thrift client");
 
     try {
-      transport.open();
+      tFramedTransport.open();
     } catch (TTransportException e) {
       e.printStackTrace();
-      log.log(Level.WARNING, "Could not establish connection to Thrift server");
     }
 
     location= new Location(locationID,stationName, 23.23, 45.45);
-
+    log.log(Level.INFO, "after location");
 
     try {
       userId= weatherClient.login(location);
@@ -63,7 +61,7 @@ public class WStationThriftClient {
       log.log(Level.WARNING, "Thrift-Logout failed");
     }
 
-    transport.close();
+    tFramedTransport.close();
   }
 
 
