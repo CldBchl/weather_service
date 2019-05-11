@@ -22,6 +22,8 @@ public class Weatherstation{
   private static int serverPort;
   private static HttpServer httpServer;
 
+  private static WStationThriftClient wStationThriftClient;
+
   private String stationName;
 
   public Weatherstation(String n, String receiveIP, String receiveP, String serverIP, String serverP) {
@@ -44,6 +46,7 @@ public class Weatherstation{
 
     sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress, weatherstation.stationName);
     httpServer = new HttpServer(serverPort, serverIpAddress, weatherstation.stationName);
+    wStationThriftClient= new WStationThriftClient("141.100.70.110","8080",weatherstation.stationName);
 
     //launch httpServer thread
     Thread serverThread= new Thread(httpServer);
