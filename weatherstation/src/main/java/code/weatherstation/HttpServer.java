@@ -22,12 +22,12 @@ import java.util.logging.Logger;
 public class HttpServer implements Runnable {
 
   private static final Logger log = Logger.getLogger(HttpServer.class.getName());
-  private InetAddress serverIpAddress;
-  private int serverPort;
-  private ServerSocket serverSocket;
-  private Socket server;
-  private int backlog = 50;
-  private Selector selector;
+  private static InetAddress serverIpAddress;
+  private static int serverPort;
+  private static ServerSocket serverSocket;
+  private static Socket server;
+  private static int backlog = 50;
+  private static Selector selector;
   private String weatherstation;
 
   public HttpServer(int port, InetAddress ip, String weatherstationName) {
