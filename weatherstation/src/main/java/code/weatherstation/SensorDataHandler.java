@@ -1,6 +1,8 @@
 package code.weatherstation;
 
+import code.weatherstation.thrift.WeatherReport;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -8,8 +10,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.FileWriter;
-import org.json.*;
+import org.json.JSONObject;
 
 /*
  * The SensorDataHandler class receives data via UDP and processes the incoming messages.
@@ -20,9 +21,11 @@ public class SensorDataHandler implements Runnable{
   private static final Logger log = Logger.getLogger( SensorDataHandler.class.getName() );
   private static DatagramSocket udpSocket;
   private String stationName;
+  private static WStationThriftClient weatherClient;
 
-  public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName){
+  public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName, WStationThriftClient client){
     this.stationName = stationName;
+    this.weatherClient =client;
     try {
       udpSocket = new DatagramSocket(receivePort, receiveIpAddress);
       udpSocket.setReceiveBufferSize(1024);
@@ -40,6 +43,9 @@ public class SensorDataHandler implements Runnable{
     while (true) {
       String data = receiveUDPPackets();
       parseAndStoreSensorData(data);
+      prepareWeatherReport(data);
+      //Thread thread = new Thread(weatherClient);
+      //thread.start();
     }
   }
 
@@ -78,11 +84,12 @@ public class SensorDataHandler implements Runnable{
     }
   }
 
-  private  void parseAndStoreSensorData(String data){
+  private void parseAndStoreSensorData(String data){
     //System.out.println(data);
 
       JSONObject json = new JSONObject(data);
      // System.out.println(json.toString());
+
 
      switch ((String) json.get("type")){
        case "temperature":
@@ -119,6 +126,51 @@ public class SensorDataHandler implements Runnable{
       System.out.println("Could not create or write to file");
     }
   }
+
+  private void prepareWeatherReport(String data){
+
+    JSONObject json = new JSONObject(data);
+    WeatherReport report= new WeatherReport();
+
+    switch ((String) json.get("type")){
+      case "temperature":
+        String temperatureAsString=json.getString("value");
+        temperatureAsString= temperatureAsString.replace(",",".");
+        System.out.println("temperature value: " + temperatureAsString );
+        report.setTemperature(Double.parseDouble(temperatureAsString));
+        break;
+
+      case "rain":
+        String rainAsString=json.getString("value");
+        rainAsString= rainAsString.replace(",",".");
+        System.out.println("rain value: " + rainAsString );
+        report.setRainfall(Double.parseDouble(rainAsString));
+        break;
+
+      case "wind":
+        String windAsString=json.getString("value");
+        windAsString= windAsString.replace(",",".");
+        windAsString = String.valueOf(Double.valueOf(windAsString).intValue());
+        System.out.println("wind value: " + windAsString );
+        report.setWindStrength(Byte.parseByte(windAsString));
+        break;
+
+      case "humidity":
+        String humidityAsString= json.getString("value");
+        humidityAsString= humidityAsString.replace(",",".");
+        humidityAsString = String.valueOf(Double.valueOf(humidityAsString).intValue());
+        System.out.println("humidiy value: " + humidityAsString );
+        report.setHumidity(Byte.parseByte(humidityAsString));
+        break;
+
+      default:
+        System.out.println("Invalid sensortype: " + json.get("type") );
+    }
+
+    weatherClient.updateWeatherReport(report);
+
+  }
+
 
   @Override
   public void run() {

@@ -22,13 +22,20 @@ public class Weatherstation{
   private static int serverPort;
   private static HttpServer httpServer;
 
+  private static String locationId;
+  private static String thriftServerIp; //141.100.70.110
+  private static String thriftServerPort; //8080
   private static WStationThriftClient wStationThriftClient;
 
 
   private String stationName;
 
-  public Weatherstation(String n, String receiveIP, String receiveP, String serverIP, String serverP) {
-    stationName = n;
+  public Weatherstation(String n, String receiveIP, String receiveP, String serverIP, String serverP,
+      String locId, String tServerIp, String tServerPort) {
+    this.stationName = n;
+    locationId=locId;
+    thriftServerIp=tServerIp;
+    thriftServerPort=tServerPort;
     try {
       receiveIpAddress = InetAddress.getByName(receiveIP);
       serverIpAddress = InetAddress.getByName(serverIP);
@@ -42,12 +49,13 @@ public class Weatherstation{
   public static void main (String [] args)
   {
     Weatherstation weatherstation=
-        new Weatherstation(args[0], args[1], args[2], args[3], args[4]);
+        new Weatherstation(args[0], args[1], args[2], args[3], args[4], args[5],args[6],args[7]);
     System.out.println(weatherstation.stationName);
 
-    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress, weatherstation.stationName);
     httpServer = new HttpServer(serverPort, serverIpAddress, weatherstation.stationName);
-    wStationThriftClient= new WStationThriftClient("141.100.70.110","8080",weatherstation.stationName);
+    wStationThriftClient= new WStationThriftClient(thriftServerIp, thriftServerPort,
+        weatherstation.stationName, locationId);
+    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress, weatherstation.stationName, wStationThriftClient);
 
 
     //launch httpServer thread
