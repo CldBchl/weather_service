@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -54,6 +55,7 @@ public class HttpServer implements Runnable {
 
       ServerSocketChannel serverChannel = ServerSocketChannel.open();
       serverSocket = serverChannel.socket();
+      serverSocket.setOption(StandardSocketOptions.SO_REUSEADDR, true);
       InetSocketAddress socketAddress = new InetSocketAddress(serverIpAddress, serverPort);
       serverSocket.bind(socketAddress, backlog);
 
@@ -114,6 +116,7 @@ public class HttpServer implements Runnable {
       ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
       SocketChannel client = serverSocketChannel.accept();
+      client.setOption(StandardSocketOptions.SO_REUSEADDR,true);
       client.configureBlocking(false);
       System.out.println("Accepted connection with client" + client);
 

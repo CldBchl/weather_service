@@ -5,9 +5,9 @@ trap "kill 0" EXIT
 # params: type sourceIP sourcePort destIP destPort
 
 echo "Starting Weatherstations:"
-# parameters Stationname IpForSensors PortForSensors IpForHttp PortForHttp
+# parameters Stationname IpForSensors PortForSensors IpForHttp PortForHttp locationID IpForThriftServer PortForThriftServer
 rm -r ./sensorData/Demo1
-./weatherstation/build/install/weatherstation/bin/weatherstation Demo1  127.0.0.1 5555 127.0.0.1 5554&
+./weatherstation/build/install/weatherstation/bin/weatherstation Demo1  127.0.0.1 5555 127.0.0.1 5554 0 141.100.70.110 8080 &
 
 
 echo "Starting Sensors:"
