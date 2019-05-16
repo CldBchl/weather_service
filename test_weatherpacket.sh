@@ -13,9 +13,9 @@ rm -r ./sensorData/Demo1
 echo "Starting Sensors:"
 # params: type interval sourceIP sourcePort destIP destPort
 
-./sensor/build/install/sensor/bin/sensor temperature 2 127.0.0.1 5556 127.0.0.1 5555 demo &
-./sensor/build/install/sensor/bin/sensor humidity 2 127.0.0.1 5557 127.0.0.1 5555 demo &
-./sensor/build/install/sensor/bin/sensor wind 2 127.0.0.1 5558 127.0.0.1 5555 demo &
-./sensor/build/install/sensor/bin/sensor rain 2 127.0.0.1 5559 127.0.0.1 5555 demo&
+./sensor/build/install/sensor/bin/sensor temperature 2 0.0.0.0 5556 0.0.0.0 5555 demo &
+./sensor/build/install/sensor/bin/sensor humidity 2 0.0.0.0 5557 0.0.0.0 5555 demo &
+./sensor/build/install/sensor/bin/sensor wind 2 0.0.0.0 5558 0.0.0.0 5555 demo &
+./sensor/build/install/sensor/bin/sensor rain 2 0.0.0.0 5559 0.0.0.0 5555 demo&
 
 wait
