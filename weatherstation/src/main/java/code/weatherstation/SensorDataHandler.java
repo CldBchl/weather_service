@@ -25,13 +25,16 @@ public class SensorDataHandler implements Runnable {
   private String stationName;
   private static WStationThriftClient weatherClient;
   private static ExecutorService executorService;
+  private WeatherReport report;
 
   public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName,
       WStationThriftClient client) {
     this.stationName = stationName;
     weatherClient = client;
-    //the executeorService manages as single WStationThriftClient thread and queues submitted tasks
+    report= new WeatherReport();
+    //the executorService manages as single WStationThriftClient thread and queues submitted tasks
     executorService= Executors.newSingleThreadExecutor();
+
 
     try {
       udpSocket = new DatagramSocket(null);
@@ -139,7 +142,6 @@ public class SensorDataHandler implements Runnable {
   private void prepareWeatherReport(String data) {
 
     JSONObject json = new JSONObject(data);
-    WeatherReport report = new WeatherReport();
 
     switch ((String) json.get("type")) {
       case "temperature":
