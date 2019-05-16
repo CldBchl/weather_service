@@ -1,20 +1,23 @@
 package weatherservice;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.async.AsyncMethodCallback;
 import weatherservice.thrift.*;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 public class WeatherServiceImpl implements Weather.Iface {
 
     private String serverName;
     private HashMap<Long,SystemWarning> systemWarnings = new HashMap<>();
-    private HashMap<Long,Location> activeUsers = new HashMap<>();
-    // TODO seperate quew for acutal active users and one map to link user to location
+    private HashMap<Location, Long> LocationIds = new HashMap<>();
+    private HashMap<Long, Location> idLocations = new HashMap<>();
+    private HashSet<Long> activeUsers = new HashSet<>() {};
 
     public WeatherServiceImpl(String name ){
         this.serverName = name;
@@ -23,7 +26,7 @@ public class WeatherServiceImpl implements Weather.Iface {
     private long generateUserId() {
         // TODO: use secure sessionID Generator;
         long id = 0;
-        while (activeUsers.containsKey(id)){
+        while (LocationIds.containsValue(id)){
             id++;
         }
         return id;
@@ -36,17 +39,28 @@ public class WeatherServiceImpl implements Weather.Iface {
     }
 
     private boolean validateSession(long sessionToken) {
-        return activeUsers.containsKey(sessionToken);
+        return activeUsers.contains(sessionToken);
     }
-
-
 
     @Override
     public long login(Location location) throws LocationException, TException {
-        if (!activeUsers.containsValue(location)&& validateLocation(location)){
-            long userId = generateUserId();
-            activeUsers.put(userId, location);
-            return userId;
+        long userId;
+
+        if (!validateLocation(location))
+            throw new LocationException(location, "location has unset field");
+
+        // generate UserDd for location if doesnt exist
+        if (!LocationIds.containsKey(location)) {
+            userId = generateUserId();
+            LocationIds.put(location, userId);
+            idLocations.put(userId,location);
+        }
+
+        // login location with its UserId if not already logged in
+        if (!activeUsers.contains(LocationIds.get(location))) {
+            activeUsers.add(LocationIds.get(location));
+            return LocationIds.get(location); // return userId
+
         } else {
             throw new LocationException(location, "location already exists or has unset field");
         }
@@ -54,19 +68,20 @@ public class WeatherServiceImpl implements Weather.Iface {
 
     @Override
     public boolean logout(long sessionToken) throws UnknownUserException, TException {
-        // TODO: logout user at 2 o Clock
-        if(activeUsers.containsKey(sessionToken)){
-            Location loc = activeUsers.get(sessionToken);
-            if (activeUsers.remove(sessionToken,loc)) {
+        // TODO: logout user at 2 o Clock?
+        if(activeUsers.contains(sessionToken)){
+            if (activeUsers.remove(sessionToken)) {
+                systemWarnings.remove(sessionToken);
                 return true;
             } else {
                 return false;
             }
 
         } else {
-            throw new UnknownUserException(sessionToken, "unknown user");
+            throw new UnknownUserException(sessionToken, "user isn't logged in");
         }
     }
+
 
     @Override
     public boolean sendWeatherReport(WeatherReport report, long sessionToken) throws UnknownUserException, ReportException, DateException, LocationException, TException {
@@ -74,11 +89,10 @@ public class WeatherServiceImpl implements Weather.Iface {
             throw new UnknownUserException(sessionToken, "unknown user");
         }
 
-        //new File("./sensorData/"+stationName).mkdirs();
-        //FileWriter file = new FileWriter("./sensorData/" + stationName + "/" + jsonObject.get("type")+ ".txt",true);
+        // write report to file
         try {
             new File("./serverData/"+ serverName).mkdirs();
-            FileWriter file = new FileWriter("./serverData/" + serverName + "/" + ".txt",true);
+            FileWriter file = new FileWriter("./serverData/" + serverName + "/" + sessionToken + ".txt",true);
             file.append(report.toString());
             file.append("\n");
             file.flush();
@@ -95,7 +109,20 @@ public class WeatherServiceImpl implements Weather.Iface {
         if (!validateSession(userId)){
             throw new UnknownUserException(userId, "unknown user");
         }
-        return new WeatherReport();
+
+        WeatherReport report = new WeatherReport(
+                Report.RAINY,
+                idLocations.get(userId),
+                16.5,
+                Byte.parseByte("5"),
+                Byte.parseByte("20"),
+                10,
+                Short.parseShort("30"),
+                Short.parseShort("30"),
+                time
+        );
+
+        return report;
     }
 
     @Override
@@ -103,7 +130,8 @@ public class WeatherServiceImpl implements Weather.Iface {
         if (!validateSession(userId)){
             throw new UnknownUserException(userId, "unknown user");
         }
-        return WeatherWarning.BLIZZARD;
+
+        return WeatherWarning.NONE;
     }
 
     @Override
@@ -114,11 +142,7 @@ public class WeatherServiceImpl implements Weather.Iface {
 
         systemWarnings.putIfAbsent(userId,systemWarning);
 
-        // validate if systemWarning got correctly registered
-        if (systemWarning == systemWarnings.get(userId)){
-            return true;
-        } else {
-            return false;
-        }
+        // validate if systemWarning got correctly saved
+        return systemWarning == systemWarnings.get(userId);
     }
 }
