@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.StandardSocketOptions;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -29,12 +29,14 @@ public class SensorDataHandler implements Runnable {
   public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName,
       WStationThriftClient client) {
     this.stationName = stationName;
-    this.weatherClient = client;
+    weatherClient = client;
+    //the executeorService manages as single WStationThriftClient thread and queues submitted tasks
     executorService= Executors.newSingleThreadExecutor();
 
     try {
-      udpSocket = new DatagramSocket(receivePort, receiveIpAddress);
-      udpSocket.setOption(StandardSocketOptions.SO_REUSEADDR,true);
+      udpSocket = new DatagramSocket(null);
+      udpSocket.setReuseAddress(true);
+      udpSocket.bind(new InetSocketAddress(receiveIpAddress, receivePort));
       udpSocket.setReceiveBufferSize(1024);
       log.log(Level.INFO, "Successful UDP socket creation");
     } catch (IOException e) {
@@ -52,8 +54,9 @@ public class SensorDataHandler implements Runnable {
       parseAndStoreSensorData(data);
       prepareWeatherReport(data);
 
+      //executes the run method of WStationThriftClient or queues the request
+      //if our single thread is currently working
       executorService.execute(weatherClient);
-
     }
   }
 

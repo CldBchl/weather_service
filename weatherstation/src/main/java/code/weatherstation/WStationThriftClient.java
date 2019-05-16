@@ -121,11 +121,11 @@ public class WStationThriftClient implements Runnable {
         try {
           Boolean successfulLogout = weatherClient.logout(userId);
           if (successfulLogout) {
-            log.log(Level.INFO, "Logout successful");
+            //System.out.println("logout");
           }
         } catch (TException e) {
           e.printStackTrace();
-          log.log(Level.WARNING, "Error at login/logout");
+          //System.out.println("Error at logout");
           System.exit(2);
         }
         transport.close();

@@ -1,6 +1,5 @@
 package code.weatherstation;
 
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
@@ -15,17 +14,13 @@ public class Weatherstation{
 
   private static InetAddress receiveIpAddress;
   private static int receivePort;
-  private static DatagramSocket udpSocket;
-  private static SensorDataHandler sensorDataHandler;
 
   private static InetAddress serverIpAddress;
   private static int serverPort;
-  private static HttpServer httpServer;
 
   private static String locationId;
   private static String thriftServerIp; //141.100.70.110
   private static String thriftServerPort; //8080
-  private static WStationThriftClient wStationThriftClient;
 
 
   private String stationName;
@@ -52,10 +47,13 @@ public class Weatherstation{
         new Weatherstation(args[0], args[1], args[2], args[3], args[4], args[5],args[6],args[7]);
     System.out.println(weatherstation.stationName);
 
-    httpServer = new HttpServer(serverPort, serverIpAddress, weatherstation.stationName);
-    wStationThriftClient= new WStationThriftClient(thriftServerIp, thriftServerPort,
+    HttpServer httpServer = new HttpServer(serverPort, serverIpAddress, weatherstation.stationName);
+    WStationThriftClient wStationThriftClient = new WStationThriftClient(thriftServerIp,
+        thriftServerPort,
         weatherstation.stationName, locationId);
-    sensorDataHandler=new SensorDataHandler(receivePort, receiveIpAddress, weatherstation.stationName, wStationThriftClient);
+    SensorDataHandler sensorDataHandler = new SensorDataHandler(receivePort, receiveIpAddress,
+        weatherstation.stationName,
+        wStationThriftClient);
 
 
     //launch httpServer thread

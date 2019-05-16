@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -55,7 +54,6 @@ public class HttpServer implements Runnable {
 
       ServerSocketChannel serverChannel = ServerSocketChannel.open();
       serverSocket = serverChannel.socket();
-      serverSocket.setOption(StandardSocketOptions.SO_REUSEADDR, true);
       InetSocketAddress socketAddress = new InetSocketAddress(serverIpAddress, serverPort);
       serverSocket.bind(socketAddress, backlog);
 
@@ -63,11 +61,9 @@ public class HttpServer implements Runnable {
 
       selector = Selector.open();
 
-      SelectionKey acceptKey = serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
       while (true) {
         //updates list of selected keys (=list of ready sockets)
-        int events = selector.select();
 
         Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
@@ -116,15 +112,12 @@ public class HttpServer implements Runnable {
       ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
       SocketChannel client = serverSocketChannel.accept();
-      client.setOption(StandardSocketOptions.SO_REUSEADDR,true);
       client.configureBlocking(false);
       System.out.println("Accepted connection with client" + client);
 
       ByteBuffer buffer = ByteBuffer.allocate(1024);
 
       client.register(selector, SelectionKey.OP_READ, buffer);
-
-      int status = key.interestOps();
 
     } catch (IOException e) {
       e.printStackTrace();
