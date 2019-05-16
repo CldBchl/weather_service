@@ -4,6 +4,10 @@ trap "kill 0" EXIT
 
 # params: type sourceIP sourcePort destIP destPort
 
+
+
+
+
 echo "Starting Weatherstations:"
 # parameters Stationname IpForSensors PortForSensors IpForHttp PortForHttp locationID IpForThriftServer PortForThriftServer
 ./weatherstation/build/install/weatherstation/bin/weatherstation Station1  0.0.0.0 5555 0.0.0.0 5554 1 0.0.0.0 9090 &
