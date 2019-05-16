@@ -4,8 +4,8 @@ pidFile='pids.pid'
 
 if [[ -f ${pidFile} ]];
 then
-  #read file in reverse with tuc to kill in order sensor -> station -> service
-  pids=`cat ${pidFile}`
+  #read file in reverse with tac to kill in order sensor -> station -> service
+  pids=`tac ${pidFile}`
 
   #kill all pids
   for pid in "${pids[@]}"
