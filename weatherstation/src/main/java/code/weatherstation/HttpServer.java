@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -22,12 +21,11 @@ import java.util.logging.Logger;
 public class HttpServer implements Runnable {
 
   private static final Logger log = Logger.getLogger(HttpServer.class.getName());
-  private static InetAddress serverIpAddress;
-  private static int serverPort;
-  private static ServerSocket serverSocket;
-  private static Socket server;
-  private static int backlog = 50;
-  private static Selector selector;
+  private InetAddress serverIpAddress;
+  private int serverPort;
+  private ServerSocket serverSocket;
+  private int backlog = 50;
+  private Selector selector;
   private String weatherstation;
 
   public HttpServer(int port, InetAddress ip, String weatherstationName) {
@@ -63,11 +61,9 @@ public class HttpServer implements Runnable {
 
       selector = Selector.open();
 
-      SelectionKey acceptKey = serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
       while (true) {
         //updates list of selected keys (=list of ready sockets)
-        int events = selector.select();
 
         Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
@@ -122,8 +118,6 @@ public class HttpServer implements Runnable {
       ByteBuffer buffer = ByteBuffer.allocate(1024);
 
       client.register(selector, SelectionKey.OP_READ, buffer);
-
-      int status = key.interestOps();
 
     } catch (IOException e) {
       e.printStackTrace();
