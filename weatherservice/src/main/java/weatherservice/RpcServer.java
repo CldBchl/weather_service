@@ -26,7 +26,7 @@ public class RpcServer implements Runnable {
     public void start() throws TTransportException {
         TServerTransport serverTransport = new TServerSocket(serverPort);
         server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport)
-                .processor(new Weather.AsyncProcessor<>(new WeatherServiceImpl())));
+                .processor(new Weather.Processor<>(new WeatherServiceImpl("start"))));
 
         log.log(Level.INFO, "Starting server");
 

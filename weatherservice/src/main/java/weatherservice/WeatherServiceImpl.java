@@ -9,7 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class WeatherServiceImpl implements Weather.AsyncIface {
+public class WeatherServiceImpl implements Weather.Iface {
 
     private String serverName;
     private HashMap<Long,SystemWarning> systemWarnings = new HashMap<>();
@@ -18,18 +18,6 @@ public class WeatherServiceImpl implements Weather.AsyncIface {
 
     public WeatherServiceImpl(String name ){
         this.serverName = name;
-    }
-
-    @Override
-    public void login(Location location, AsyncMethodCallback<Long> resultHandler) throws TException {
-        if (!activeUsers.containsKey(location)&& validateLocation(location)){
-            long userId = generateUserId();
-            activeUsers.put(userId, location);
-            resultHandler.onComplete(userId);
-        } else {
-            resultHandler.onError(new LocationException(location, "location already exists or has unset field"));
-            throw new LocationException(location, "location already exists or has unset field");
-        }
     }
 
     private long generateUserId() {
@@ -43,8 +31,8 @@ public class WeatherServiceImpl implements Weather.AsyncIface {
 
     private boolean validateLocation(Location location) {
         // check if every value is set
-        return location.isSetDescription() && location.isSetLatitude() && location.isSetLocationID()
-                && location.isSetDescription() && location.isSetLongitude() && location.isSetName();
+        return  location.isSetLatitude() && location.isSetLocationID()
+                 && location.isSetLongitude() && location.isSetName();
     }
 
     private boolean validateSession(long sessionToken) {
@@ -52,75 +40,85 @@ public class WeatherServiceImpl implements Weather.AsyncIface {
     }
 
 
+
     @Override
-    public void logout(long sessionToken, AsyncMethodCallback<Boolean> resultHandler) throws TException {
+    public long login(Location location) throws LocationException, TException {
+        if (!activeUsers.containsValue(location)&& validateLocation(location)){
+            long userId = generateUserId();
+            activeUsers.put(userId, location);
+            return userId;
+        } else {
+            throw new LocationException(location, "location already exists or has unset field");
+        }
+    }
+
+    @Override
+    public boolean logout(long sessionToken) throws UnknownUserException, TException {
         // TODO: logout user at 2 o Clock
         if(activeUsers.containsKey(sessionToken)){
             Location loc = activeUsers.get(sessionToken);
             if (activeUsers.remove(sessionToken,loc)) {
-                resultHandler.onComplete(true);
+                return true;
             } else {
-                resultHandler.onComplete(false);
+                return false;
             }
 
         } else {
-            resultHandler.onError(new UnknownUserException(sessionToken, "unknown user"));
             throw new UnknownUserException(sessionToken, "unknown user");
         }
     }
 
     @Override
-    public void sendWeatherReport(WeatherReport report, long sessionToken, AsyncMethodCallback<Boolean> resultHandler) throws TException {
+    public boolean sendWeatherReport(WeatherReport report, long sessionToken) throws UnknownUserException, ReportException, DateException, LocationException, TException {
         if (!validateSession(sessionToken)){
-            resultHandler.onError(new UnknownUserException(sessionToken, "unknown user"));
             throw new UnknownUserException(sessionToken, "unknown user");
         }
 
+        //new File("./sensorData/"+stationName).mkdirs();
+        //FileWriter file = new FileWriter("./sensorData/" + stationName + "/" + jsonObject.get("type")+ ".txt",true);
         try {
             new File("./serverData/"+ serverName).mkdirs();
             FileWriter file = new FileWriter("./serverData/" + serverName + "/" + ".txt",true);
             file.append(report.toString());
             file.append("\n");
             file.flush();
-            resultHandler.onComplete(true);
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
-            resultHandler.onError(e);
             System.out.println("Could not create or write to file");
         }
-        resultHandler.onComplete(false);
+        return false;
     }
 
     @Override
-    public void receiveForecastFor(long userId, String time, AsyncMethodCallback<WeatherReport> resultHandler) throws TException {
+    public WeatherReport receiveForecastFor(long userId, String time) throws UnknownUserException, DateException, TException {
         if (!validateSession(userId)){
-            resultHandler.onError(new UnknownUserException(userId, "unknown user"));
             throw new UnknownUserException(userId, "unknown user");
         }
+        return new WeatherReport();
     }
 
     @Override
-    public void checkWeatherWarnings(long userId, AsyncMethodCallback<WeatherWarning> resultHandler) throws TException {
+    public WeatherWarning checkWeatherWarnings(long userId) throws UnknownUserException, TException {
         if (!validateSession(userId)){
-            resultHandler.onError(new UnknownUserException(userId, "unknown user"));
             throw new UnknownUserException(userId, "unknown user");
         }
+        return WeatherWarning.BLIZZARD;
     }
 
     @Override
-    public void sendWarning(SystemWarning systemWarning, long userId, AsyncMethodCallback<Boolean> resultHandler) throws TException {
+    public boolean sendWarning(SystemWarning systemWarning, long userId) throws UnknownUserException, TException {
         if (!validateSession(userId)){
-            resultHandler.onError(new UnknownUserException(userId, "unknown user"));
             throw new UnknownUserException(userId, "unknown user");
         }
 
-       systemWarnings.putIfAbsent(userId,systemWarning);
+        systemWarnings.putIfAbsent(userId,systemWarning);
 
         // validate if systemWarning got correctly registered
         if (systemWarning == systemWarnings.get(userId)){
-            resultHandler.onComplete(true);
+            return true;
         } else {
-            resultHandler.onComplete(false);
+            return false;
         }
     }
 }

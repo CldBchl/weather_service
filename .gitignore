@@ -18,4 +18,6 @@ humidity.txt
 rain.txt
 temperature.txt
 wind.txt
-sensorData/*
+sensorData
+serverData
+out
