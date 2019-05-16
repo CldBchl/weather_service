@@ -1,12 +1,16 @@
 package code.weatherstation;
 
 import code.weatherstation.thrift.Location;
+import code.weatherstation.thrift.SystemWarning;
 import code.weatherstation.thrift.Weather;
 import code.weatherstation.thrift.WeatherReport;
+import code.weatherstation.thrift.WeatherWarning;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.thrift.TException;
@@ -63,6 +67,9 @@ public class WStationThriftClient implements Runnable {
     weatherReport.setLocation(location);
 
     performLogin(weatherClient);
+    performReceiveWeatherForecast(weatherClient);
+    performCheckWeatherwarning(weatherClient);
+    performSendSystemWarning(weatherClient);
   }
 
   @Override
@@ -70,7 +77,7 @@ public class WStationThriftClient implements Runnable {
     performSendWeatherReport(weatherClient);
   }
 
-  private Boolean performLogin(Weather.Client client) {
+  private void performLogin(Weather.Client client) {
 
     try {
       userId = client.login(location);
@@ -83,23 +90,24 @@ public class WStationThriftClient implements Runnable {
       successfulLogin = false;
     }
 
-    return successfulLogin;
   }
 
-  private Boolean performSendWeatherReport(Weather.Client client) {
+  private void performSendWeatherReport(Weather.Client client) {
 
     if (successfulLogin) {
       try {
         if (client.sendWeatherReport(weatherReport, userId)) {
           log.log(Level.INFO, "Weather report sent successfully");
+        } else {
+          log.log(Level.WARNING, "Weather report could not be sent");
         }
-        return true;
+
       } catch (TException e) {
         e.printStackTrace();
         log.log(Level.WARNING, "Weather report could not be sent");
       }
     }
-    return false;
+
   }
 
 
@@ -120,6 +128,51 @@ public class WStationThriftClient implements Runnable {
 
   }
 
+  private void performReceiveWeatherForecast(Weather.Client client) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
+    String currentTimeISO8601Short = ZonedDateTime.now().format(formatter);
+    System.out.println(currentTimeISO8601Short);
+    try {
+      WeatherReport forecast = client.receiveForecastFor(userId, currentTimeISO8601Short);
+      log.log(Level.INFO, "Forecast was received successfully");
+      System.out.println("The current forecast for location " + locationId + " is: " + forecast);
+    } catch (TException e) {
+      e.printStackTrace();
+      log.log(Level.WARNING, "Forecast could not be received");
+    }
+  }
+
+
+  private void performCheckWeatherwarning(Weather.Client client) {
+    try {
+      WeatherWarning weatherWarning = client.checkWeatherWarnings(userId);
+      log.log(Level.INFO, "Weatherwarning was received successfully");
+      System.out.println(
+          "The current weatherwarning for location " + locationId + " is: " + weatherWarning);
+    } catch (TException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void performSendSystemWarning(Weather.Client client) {
+    Random randomGenerator = new Random();
+    int warningValue = randomGenerator.nextInt(4) + 1;
+    SystemWarning warning = SystemWarning.findByValue(warningValue);
+    System.out.println("The current system warning for location " + locationId + " is: " + warning);
+
+    try {
+      if (client.sendWarning(warning, userId)) {
+        log.log(Level.INFO, "Systemwarning was received successfully");
+      } else {
+        log.log(Level.INFO, "Systemwarning was not received");
+      }
+    } catch (TException e) {
+      log.log(Level.WARNING, "Systemwarning could not be sent");
+      e.printStackTrace();
+    }
+
+  }
+
 
   /*
   private class ShutDownTask ensures a proper logout and closing of connection after program exit
@@ -132,7 +185,7 @@ public class WStationThriftClient implements Runnable {
       //only logout if login was successful
       if (successfulLogin) {
         try {
-          Boolean successfulLogout = weatherClient.logout(userId);
+          boolean successfulLogout = weatherClient.logout(userId);
           if (successfulLogout) {
             //System.out.println("logout");
           }
