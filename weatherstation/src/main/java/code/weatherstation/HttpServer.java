@@ -54,6 +54,7 @@ public class HttpServer implements Runnable {
 
       ServerSocketChannel serverChannel = ServerSocketChannel.open();
       serverSocket = serverChannel.socket();
+      serverSocket.setReuseAddress(true);
       InetSocketAddress socketAddress = new InetSocketAddress(serverIpAddress, serverPort);
       serverSocket.bind(socketAddress, backlog);
 
@@ -61,9 +62,14 @@ public class HttpServer implements Runnable {
 
       selector = Selector.open();
 
+      serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+
 
       while (true) {
         //updates list of selected keys (=list of ready sockets)
+       selector.select();
+
 
         Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
