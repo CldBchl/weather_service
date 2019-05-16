@@ -11,7 +11,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.THttpClient;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 
@@ -19,8 +20,8 @@ public class WStationThriftClient implements Runnable {
 
   private static final Logger log = Logger.getLogger(WStationThriftClient.class.getName());
 
-  //private TTransport transport;
-  private THttpClient transport;
+  private TTransport transport;
+  //private THttpClient transport;
   private Weather.Client weatherClient;
   private byte locationId;
   private Location location;
@@ -30,12 +31,15 @@ public class WStationThriftClient implements Runnable {
 
   public WStationThriftClient(String serverIP, String serverPort, String stationName, String lId) {
 
-    String url = "http://" + serverIP + ":" + serverPort + "/weather";
+    /*String url = "http://" + serverIP + ":" + serverPort + "/weather";
     try {
       transport = new THttpClient(url);
     } catch (TTransportException e) {
       e.printStackTrace();
-    }
+    }*/
+
+    transport = new TSocket(serverIP, Integer.parseInt(serverPort));
+
     TBinaryProtocol protocol = new TBinaryProtocol(transport);
     weatherClient = new Weather.Client(protocol);
 
@@ -43,7 +47,14 @@ public class WStationThriftClient implements Runnable {
     ShutDownTask shutDownTask = new ShutDownTask();
     Runtime.getRuntime().addShutdownHook(shutDownTask);
 
-    transport.open();
+    //transport.open();
+
+    try {
+      transport.open();
+    } catch (TTransportException e) {
+      log.log(Level.WARNING, "Error when opening connection");
+      e.printStackTrace();
+    }
 
     locationId = Byte.parseByte(lId);
     location = new Location(locationId, stationName, 23.24, 45.45);
@@ -79,8 +90,10 @@ public class WStationThriftClient implements Runnable {
 
     if (successfulLogin) {
       try {
-        log.log(Level.INFO, "Weather report sent successfully");
-        return client.sendWeatherReport(weatherReport, userId);
+        if (client.sendWeatherReport(weatherReport, userId)) {
+          log.log(Level.INFO, "Weather report sent successfully");
+        }
+        return true;
       } catch (TException e) {
         e.printStackTrace();
         log.log(Level.WARNING, "Weather report could not be sent");
