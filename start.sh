@@ -21,10 +21,17 @@ locationId=0
 sensorInterval=2
 
 # net configuration
+<<<<<<< HEAD
 port=9000
 
 # ip0 is local ip
 ip0=127.0.0.1
+=======
+port=8000
+
+# ip0 is local ip
+ip0=0.0.0.0
+>>>>>>> 4caba1c2636809931c265c58b262edf71fb1d053
 
 #ip1 set ip1 as target ip, if you want to send data to another pc
 ip1=0.0.0.0
