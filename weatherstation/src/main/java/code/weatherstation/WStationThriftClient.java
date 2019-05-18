@@ -117,7 +117,7 @@ public class WStationThriftClient implements Runnable {
     weatherReport.setTemperature(update.getTemperature());
     weatherReport.setRainfall(update.getRainfall());
     weatherReport.setHumidity(update.getHumidity());
-    weatherReport.setWindDirection(update.getWindStrength());
+    weatherReport.setWindStrength(update.getWindStrength());
 
     //set current time
     String currentTimeISO8601 = ZonedDateTime.now(ZoneId.of("Europe/Paris"))
@@ -190,8 +190,8 @@ public class WStationThriftClient implements Runnable {
             //System.out.println("logout");
           }
         } catch (TException e) {
-          e.printStackTrace();
-          //System.out.println("Error at logout");
+          //e.printStackTrace();
+          System.out.println("Server already down");
           System.exit(2);
         }
         transport.close();
