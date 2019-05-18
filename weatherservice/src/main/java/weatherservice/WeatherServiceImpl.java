@@ -1,15 +1,16 @@
 package weatherservice;
 
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.thrift.TException;
 import weatherservice.thrift.*;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class WeatherServiceImpl implements Weather.Iface {
 
@@ -24,7 +25,6 @@ public class WeatherServiceImpl implements Weather.Iface {
     }
 
     private long generateUserId() {
-        // TODO: use secure sessionID Generator;
         long id = 0;
         while (LocationIds.containsValue(id)){
             id++;
@@ -110,20 +110,111 @@ public class WeatherServiceImpl implements Weather.Iface {
             throw new UnknownUserException(userId, "unknown user");
         }
 
-        WeatherReport report = new WeatherReport(
-                Report.RAINY,
-                idLocations.get(userId),
-                16.5,
-                Byte.parseByte("5"),
-                Byte.parseByte("20"),
-                10,
-                Short.parseShort("30"),
-                Short.parseShort("30"),
-                time
-        );
+        WeatherReport forecast = readReport(userId);
+
+        forecast.setLocation(idLocations.get(userId));
+        forecast.setDateTime(time);
+
+        return forecast;
+    }
+
+    private WeatherReport readReport(long userId) {
+        StringBuilder reportsBuilder = new StringBuilder();
+        WeatherReport forecast = new WeatherReport();
+
+        try {
+            new File("./serverData/" + serverName + "/" + userId + ".txt").mkdirs();
+            File file = new File(("./serverData/" + serverName + "/" + userId + ".txt"));
+            ReversedLinesFileReader rf = new ReversedLinesFileReader(file, UTF_8);
+
+            // read last Report
+            reportsBuilder.append(rf.readLine());
+            forecast = buildReport(reportsBuilder.toString());
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Could not create or write to file");
+        }
+
+        return forecast;
+    }
+
+    private WeatherReport buildReport(String string) {
+        WeatherReport report = new WeatherReport();
+        int index, endOfParamIndex;
+        String param;
+
+        //get Report
+        index = string.indexOf("report:");
+        string = string.substring(index + "report:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+
+        if (!param.equals("null"))
+            report.setReport(Report.findByValue(Integer.parseInt(param)));
+
+        // get temperature
+        index = string.indexOf("temperature:");
+        string = string.substring(index + "temperature:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+        if (!param.equals("null"))
+            report.setTemperature(Double.parseDouble(param));
+
+        // get humidity
+        index = string.indexOf("humidity:");
+        string = string.substring(index + "humidity:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+        if (!param.equals("null"))
+            report.setHumidity(Byte.parseByte(param));
+
+        // get windStrength
+        index = string.indexOf("windStrength:");
+        string = string.substring(index + "windStrength:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+        if (!param.equals("null"))
+            report.setWindStrength(Byte.parseByte(param));
+
+        // get rainfall
+        index = string.indexOf("rainfall:");
+        string = string.substring(index + "rainfall:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+        if (!param.equals("null"))
+            report.setRainfall(Double.parseDouble(param));
+
+        // get atmosphericpressure
+        index = string.indexOf("atmosphericpressure:");
+        string = string.substring(index + "atmosphericpressure:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+        if (!param.equals("null"))
+            report.setAtmosphericpressure(Short.parseShort(param));
+
+        // get windDirection
+        index = string.indexOf("windDirection:");
+        string = string.substring(index + "windDirection:".length());
+        endOfParamIndex = string.indexOf(",");
+        param = string.substring(0, endOfParamIndex);
+        report.setWindDirection(Short.parseShort(param));
+
+        // get dateTime
+        index = string.indexOf("dateTime:");
+        string = string.substring(index + "dateTime:".length() -1);
+        endOfParamIndex = string.indexOf(")");
+        param = string.substring(0, endOfParamIndex);
+        if (!param.equals("null"))
+            report.setDateTime(param);
 
         return report;
     }
+
+
+    //WeatherReport(report:null, location:Location(locationID:1, name:Station2, latitude:23.24, longitude:45.45),
+    // temperature:12.34, humidity:12, windStrength:0, rainfall:2.63, atmosphericpressure:0, windDirection:0, dateTime:2019-05-18T09:31:46+02:00)
 
     @Override
     public WeatherWarning checkWeatherWarnings(long userId) throws UnknownUserException, TException {
@@ -131,7 +222,22 @@ public class WeatherServiceImpl implements Weather.Iface {
             throw new UnknownUserException(userId, "unknown user");
         }
 
-        return WeatherWarning.NONE;
+        WeatherReport report = readReport(userId);
+        if (report.getRainfall() > 100 && report.getWindStrength() > 50 && report.getTemperature() < -2){
+            return WeatherWarning.BLIZZARD;
+        } else if (report.getRainfall() > 500){
+            return WeatherWarning.FLOOD;
+        } else if (report.getWindStrength() > 120 ){
+            return (WeatherWarning.HURRICANE);
+        } if (report.getRainfall() > 50 && report.getWindStrength() < 30){
+            return WeatherWarning.STORM;
+        } else if (report.getWindStrength() > 60){
+            return WeatherWarning.TORNADO;
+        } else if (report.getTemperature() > 50){
+            return WeatherWarning.UV;
+        } else {
+            return WeatherWarning.NONE;
+        }
     }
 
     @Override
