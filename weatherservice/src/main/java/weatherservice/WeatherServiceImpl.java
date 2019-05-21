@@ -1,16 +1,24 @@
 package weatherservice;
 
-import org.apache.commons.io.input.ReversedLinesFileReader;
-import org.apache.thrift.TException;
-import weatherservice.thrift.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.commons.io.input.ReversedLinesFileReader;
+import org.apache.thrift.TException;
+import weatherservice.thrift.DateException;
+import weatherservice.thrift.Location;
+import weatherservice.thrift.LocationException;
+import weatherservice.thrift.Report;
+import weatherservice.thrift.ReportException;
+import weatherservice.thrift.SystemWarning;
+import weatherservice.thrift.UnknownUserException;
+import weatherservice.thrift.Weather;
+import weatherservice.thrift.WeatherReport;
+import weatherservice.thrift.WeatherWarning;
 
 public class WeatherServiceImpl implements Weather.Iface {
 
@@ -123,15 +131,18 @@ public class WeatherServiceImpl implements Weather.Iface {
         WeatherReport forecast = new WeatherReport();
 
         try {
-            new File("./serverData/" + serverName + "/" + userId + ".txt").mkdirs();
             File file = new File(("./serverData/" + serverName + "/" + userId + ".txt"));
-            ReversedLinesFileReader rf = new ReversedLinesFileReader(file, UTF_8);
 
-            // read last Report
-            reportsBuilder.append(rf.readLine());
-            forecast = buildReport(reportsBuilder.toString());
+            if (file.exists()) {
+                ReversedLinesFileReader rf = new ReversedLinesFileReader(file, UTF_8);
 
-
+                // read last Report
+                reportsBuilder.append(rf.readLine());
+                forecast = buildReport(reportsBuilder.toString());
+            }
+            else {
+                forecast= new WeatherReport();
+            }
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Could not create or write to file");
