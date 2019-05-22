@@ -30,6 +30,7 @@ public class WeatherServiceImpl implements Weather.Iface {
 
     public WeatherServiceImpl(String name ){
         this.serverName = name;
+        System.out.println(activeUsers);
     }
 
     private long generateUserId() {
@@ -51,8 +52,9 @@ public class WeatherServiceImpl implements Weather.Iface {
     }
 
     @Override
-    public long login(Location location) throws LocationException, TException {
+    synchronized public long login(Location location) throws LocationException, TException {
         long userId;
+        System.out.println(location);
 
         if (!validateLocation(location))
             throw new LocationException(location, "location has unset field");
@@ -60,13 +62,18 @@ public class WeatherServiceImpl implements Weather.Iface {
         // generate UserDd for location if doesnt exist
         if (!LocationIds.containsKey(location)) {
             userId = generateUserId();
+            System.out.println(userId);
             LocationIds.put(location, userId);
             idLocations.put(userId,location);
+            System.out.println("userId: "+ LocationIds.get(location));
+            System.out.println("location: " +idLocations.get(userId));
         }
 
+        System.out.println("Before login" +activeUsers.toString());
         // login location with its UserId if not already logged in
         if (!activeUsers.contains(LocationIds.get(location))) {
             activeUsers.add(LocationIds.get(location));
+            System.out.println("After login" +activeUsers.toString());
             return LocationIds.get(location); // return userId
 
         } else {
@@ -80,6 +87,9 @@ public class WeatherServiceImpl implements Weather.Iface {
         if(activeUsers.contains(sessionToken)){
             if (activeUsers.remove(sessionToken)) {
                 systemWarnings.remove(sessionToken);
+                System.out.println("successful logout");
+                System.out.println("after logout" +activeUsers.toString());
+
                 return true;
             } else {
                 return false;

@@ -80,8 +80,8 @@ public class SensorDataHandler implements Runnable {
         byte[] data = packet.getData();
 
         String dataString = new String(data, 0, len);
-        System.out
-            .printf("Receive data from IP %s and from port %d :%n%s%n", address, port, dataString);
+      //  System.out
+      //      .printf("Receive data from IP %s and from port %d :%n%s%n", address, port, dataString);
 
         return dataString;
 
