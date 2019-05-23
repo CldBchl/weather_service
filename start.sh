@@ -25,7 +25,7 @@ sensorInterval=2
 port=7500
 
 # ip0 is local ip
-ip0=127.0.0.1
+ip0=0.0.0.0
 
 #ip1 set ip1 as target ip, if you want to send data to another pc
 ip1=0.0.0.0
@@ -71,9 +71,9 @@ else
       echo "${station} HTTP:Port =  ${port}"
 
       # params stationname IpForSensors PortForSensors IpForHttp PortForHttp locationID IpForThriftServer PortForThriftServer
-      ${stationBin} ${station} ${ip0} ${stationPort} ${ip0} ${port} ${locationId} ${ip0} ${servicePort} &
+      ${stationBin} ${station} ${ip0} ${stationPort} ${ip0} ${port} ${locationId} ${ip1} ${servicePort} &
        # save pid in file
-      echo -n "$! " >> ${pidFile}
+      echo  "$! " >> ${pidFile}
 
       # increment locationCounter
       locationId=$((locationId+1))
@@ -85,9 +85,9 @@ else
         port=$((port+1))
 
         # params: type interval sourceIP sourcePort destIP destPort
-        ${sensorBin} ${sensor} ${sensorInterval} ${ip0} ${port} ${ip0} ${stationPort} &
+        ${sensorBin} ${sensor} ${sensorInterval} ${ip0} ${port} ${ip1} ${stationPort} &
          # save pid in file
-        echo -n "$! " >> ${pidFile}
+        echo  "$! " >> ${pidFile}
 
       done
       # offset port, so next station starts at x x Y+1 0
