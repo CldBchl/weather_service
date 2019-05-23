@@ -51,7 +51,7 @@ public class WeatherServiceImpl implements Weather.Iface {
     }
 
     @Override
-    public long login(Location location) throws LocationException, TException {
+    synchronized public long login(Location location) throws LocationException, TException {
         long userId;
 
         if (!validateLocation(location))
@@ -75,7 +75,7 @@ public class WeatherServiceImpl implements Weather.Iface {
     }
 
     @Override
-    public boolean logout(long sessionToken) throws UnknownUserException, TException {
+    synchronized public boolean logout(long sessionToken) throws UnknownUserException, TException {
         // TODO: logout user at 2 o Clock?
         if(activeUsers.contains(sessionToken)){
             if (activeUsers.remove(sessionToken)) {
