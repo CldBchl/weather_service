@@ -22,7 +22,7 @@ locationId=0
 sensorInterval=2
 
 # net configuration
-port=8000
+port=7500
 
 # ip0 is local ip
 ip0=127.0.0.1
@@ -40,6 +40,7 @@ else
 if [[ -f ${servicePidFile} ]];
 then
   echo "$servicePidFile already exists. Stop the process before attempting to start."
+  rm ${pidFile}
 else
   echo -n "" > ${pidFile}
 

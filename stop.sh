@@ -20,7 +20,7 @@ else
   echo "Process file wasn't found. Aborting..."
 fi
 
-sleep 5
+sleep 4
 
 if [[ -f ${servicePidFile} ]];
 then
