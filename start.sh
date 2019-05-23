@@ -6,6 +6,7 @@ stationBin=./weatherstation/build/install/weatherstation/bin/weatherstation
 sensorBin=./sensor/build/install/sensor/bin/sensor
 
 # path for pidfile
+servicePidFile="./services.pid"
 pidFile="./pids.pid"
 
 # define names of services and stations as well as types of sensors.
@@ -21,7 +22,7 @@ locationId=0
 sensorInterval=2
 
 # net configuration
-port=9000
+port=8000
 
 # ip0 is local ip
 ip0=127.0.0.1
@@ -36,6 +37,13 @@ then
 else
   echo -n "" > ${pidFile}
 
+if [[ -f ${servicePidFile} ]];
+then
+  echo "$servicePidFile already exists. Stop the process before attempting to start."
+else
+  echo -n "" > ${pidFile}
+
+
   # Starting local services
   echo "Starting Weatherservices"
 
@@ -47,7 +55,7 @@ else
     ${serviceBin} ${service} ${servicePort} &
 
     # save pid in file
-    echo -n "$! " >> ${pidFile}
+    echo -n "$! " >> ${servicePidFile}
 
     # offset port so station-sensor-combinations are equal
     port=$((port+10))
@@ -91,12 +99,4 @@ else
 
 fi
 
-
-
-
-
-
-
-
-
-
+fi
