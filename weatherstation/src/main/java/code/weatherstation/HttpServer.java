@@ -1,5 +1,7 @@
 package code.weatherstation;
 
+import org.apache.thrift.TException;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -38,6 +40,10 @@ public class HttpServer implements Runnable {
       log.log(Level.INFO, "Successful serverSocket socket creation");
 
       selector = Selector.open();
+
+      ShutDownTask shutDownTask = new ShutDownTask();
+      Runtime.getRuntime().addShutdownHook(shutDownTask);
+
     } catch (IOException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "Server socket initialization failed");
@@ -69,7 +75,9 @@ public class HttpServer implements Runnable {
       while (true) {
         //updates list of selected keys (=list of ready sockets)
        selector.select();
-
+       if (!selector.isOpen()){
+         break;
+       }
 
         Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
@@ -131,4 +139,18 @@ public class HttpServer implements Runnable {
     }
   }
 
+  private class ShutDownTask extends Thread {
+
+    @Override
+    public void run() {
+      System.out.println("Performing http-shutdown : " + weatherstation);
+
+      try {
+        selector.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.exit(2);
+      }
+    }
+  }
 }
