@@ -78,10 +78,10 @@ exception UnknownUserException {
 }
 
 /**
- * This Exception gets thrown when a location is already logged in.
+ * This Exception gets thrown when a location is already registered as a logged in location.
  */
-exception UserActiveException {
-  1: string i64,
+exception LoggedInUserException {
+  1: i64 userId,
   2: string why
 }
 
@@ -94,18 +94,18 @@ service WeatherSync{
     /*
     * syncLoginData
     * This call sends the location and the userId of a recently logged in location.
-    * It returns true if user data was updated successfully.
+    * It returns true if the user data was updated successfully.
     *
     * param:
     * location: location of the recently logged in user.
     * userId: userId of the recently logged in user.
     */
-    bool syncLoginData(1: Location location, 2: i64 userId) throws (1: UserActiveException userActiveException),
+    bool syncLoginData(1: Location location, 2: i64 userId) throws (1: LoggedInUserException loggedInUserException),
 
    /*
     * syncLogoutData
     * This call sends the userId of a recently logged out location.
-    * It returns true if user data was updated successfully.
+    * It returns true if the user data was updated successfully.
     *
     * param:
     * userId: userId of the recently logged in user.
@@ -118,19 +118,19 @@ service WeatherSync{
     * It returns true if the report was stored successfully.
     *
     * param:
-    * weatherWarning: location of the recently logged in user.
-    * userId: userId of the recently logged in user.
+    * weatherReport: a new weatherReport.
+    * userId: userId of the location which generated the weatherReport.
     */
     bool syncWeatherReport(1: SystemWarning systemWarning, 2: i64 userId) throws (1: UnknownUserException unknownUserException),
 
    /*
     * syncSystemWarning
-    * This call an updated system warning.
+    * This call sends a system warning.
     * It returns true if the system warning was stored successfully.
     *
     * param:
-    * systemWarning: SystemWarning sent by the location.
-    * userId: userId of the recently logged in user.
+    * systemWarning: SystemWarning sent by the client.
+    * userId: userId of the location which generated the SystemWarning.
     */
     bool syncSystemWarning(1: WeatherReport weatherReport, 2: i64 userId) throws (1: UnknownUserException unknownUserException)
 
