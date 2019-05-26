@@ -2,11 +2,13 @@ package weatherservice;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.thrift.TMultiplexedProcessor;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
 import weatherservice.thrift.Weather;
+import weatherservice.weatherSync.WeatherSync;
 
 /*
  * The RpcServer class
@@ -31,10 +33,13 @@ public class RpcServer implements Runnable {
   }
 
   public void start() throws TTransportException {
+    WeatherServiceImpl weatherServiceImpl= new WeatherServiceImpl(serverName, syncServerIp, syncServerPort1, syncServerPort2);
+    TMultiplexedProcessor processor = new TMultiplexedProcessor();
+    processor.registerProcessor("WeatherAPI",new Weather.Processor<>(weatherServiceImpl));
+    processor.registerProcessor("WeatherSync", new WeatherSync.Processor<>(weatherServiceImpl));
+
     TServerTransport serverTransport = new TServerSocket(serverPort);
-    server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport)
-        .processor(new Weather.Processor<>(
-            new WeatherServiceImpl(serverName, syncServerIp, syncServerPort1, syncServerPort2))));
+    server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
     log.log(Level.INFO, "Starting server "+serverName+",port "+serverPort+", connecting to port "+syncServerPort1+" and "+syncServerPort2);
 

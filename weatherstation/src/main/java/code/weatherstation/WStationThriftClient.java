@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -37,7 +38,8 @@ public class WStationThriftClient implements Runnable {
     transport = new TSocket(serverIP, Integer.parseInt(serverPort));
 
     TBinaryProtocol protocol = new TBinaryProtocol(transport);
-    weatherClient = new Weather.Client(protocol);
+    TMultiplexedProtocol mp = new TMultiplexedProtocol(protocol, "WeatherAPI");
+    weatherClient = new Weather.Client(mp);
 
     //register shutDownTask to be executed when program is terminated
     ShutDownTask shutDownTask = new ShutDownTask();

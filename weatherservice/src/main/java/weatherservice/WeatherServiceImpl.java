@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -47,11 +48,13 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     //initialize weather.sync clients and transport connections
     TTransport transportClient1 = new TSocket(syncServerIp, syncServerPort1);
     TBinaryProtocol protocol1 = new TBinaryProtocol(transportClient1);
-    WeatherSync.Client syncClient1 = new WeatherSync.Client(protocol1);
+    TMultiplexedProtocol mp1 = new TMultiplexedProtocol(protocol1, "WeatherSync");
+    WeatherSync.Client syncClient1 = new WeatherSync.Client(mp1);
 
     TTransport transportClient2 = new TSocket(syncServerIp, syncServerPort2);
     TBinaryProtocol protocol2 = new TBinaryProtocol(transportClient2);
-    WeatherSync.Client syncClient2 = new WeatherSync.Client(protocol2);
+    TMultiplexedProtocol mp2 = new TMultiplexedProtocol(protocol2, "WeatherSync");
+    WeatherSync.Client syncClient2 = new WeatherSync.Client(mp2);
 
     clientTransport.put(syncClient1, transportClient1);
     clientTransport.put(syncClient2, transportClient2);
@@ -93,7 +96,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     //send login data to weatherAPI thrift servers
-    performSyncLoginData(location, userId);
+    //performSyncLoginData(location, userId);
 
     // login location with its UserId if not already logged in
     if (!activeUsers.contains(LocationIds.get(location))) {
@@ -110,7 +113,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   synchronized public boolean logout(long sessionToken) throws UnknownUserException, TException {
 
     //send logout data to weatherAPI thrift servers
-    performSyncLogoutData(sessionToken);
+    //performSyncLogoutData(sessionToken);
 
     if (activeUsers.contains(sessionToken)) {
       if (activeUsers.remove(sessionToken)) {
@@ -134,7 +137,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     //send weatherReport to weatherAPI servers
-    performSyncWeatherReport(report, sessionToken);
+    //performSyncWeatherReport(report, sessionToken);
 
     // write report to file
     try {
