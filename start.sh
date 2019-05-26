@@ -25,10 +25,10 @@ sensorInterval=2
 port=7500
 
 # ip0 is local ip
-ip0=0.0.0.0
+ip0=127.0.0.1
 
 #ip1 set ip1 as target ip, if you want to send data to another pc
-ip1=0.0.0.0
+ip1=127.0.0.1
 
 # saves pids of spawned programms in a pidfile to kill later
 if [[ -f ${pidFile} ]];
@@ -50,10 +50,14 @@ else
 
   for service in ${services[@]} ; do
     # port for stations xxxx
-    servicePort=${port}
+    servicePort1=${port}
+    port=$((port+1))
+    servicePort2=${port}
+    port=$((port+1))
+    servicePort3=${port}
 
-    # params: serviceName, port
-    ${serviceBin} ${service} ${servicePort} &
+    # params: serviceName, port1, port2, port3
+    ${serviceBin} ${service} ${servicePort1} ${servicePort2} ${servicePort3} &
 
     # save pid in file
     echo -n "$! " >> ${servicePidFile}
@@ -71,7 +75,7 @@ else
       echo "${station} HTTP:Port =  ${port}"
 
       # params stationname IpForSensors PortForSensors IpForHttp PortForHttp locationID IpForThriftServer PortForThriftServer
-      ${stationBin} ${station} ${ip0} ${stationPort} ${ip0} ${port} ${locationId} ${ip1} ${servicePort} &
+      ${stationBin} ${station} ${ip0} ${stationPort} ${ip0} ${port} ${locationId} ${ip1} ${servicePort1} &
        # save pid in file
       echo  "$! " >> ${pidFile}
 

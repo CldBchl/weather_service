@@ -19,8 +19,8 @@ public class Weatherstation{
   private static int serverPort;
 
   private static String locationId;
-  private static String thriftServerIp; //141.100.70.110
-  private static String thriftServerPort; //8080
+  private static String thriftServerIp;
+  private static String thriftServerPort;
 
 
   private String stationName;

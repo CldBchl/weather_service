@@ -25,7 +25,6 @@ public class WStationThriftClient implements Runnable {
   private static final Logger log = Logger.getLogger(WStationThriftClient.class.getName());
 
   private TTransport transport;
-  //private THttpClient transport;
   private Weather.Client weatherClient;
   private byte locationId;
   private Location location;
@@ -35,13 +34,6 @@ public class WStationThriftClient implements Runnable {
 
   public WStationThriftClient(String serverIP, String serverPort, String stationName, String lId) {
 
-    /*String url = "http://" + serverIP + ":" + serverPort + "/weather";
-    try {
-      transport = new THttpClient(url);
-    } catch (TTransportException e) {
-      e.printStackTrace();
-    }*/
-
     transport = new TSocket(serverIP, Integer.parseInt(serverPort));
 
     TBinaryProtocol protocol = new TBinaryProtocol(transport);
@@ -50,8 +42,6 @@ public class WStationThriftClient implements Runnable {
     //register shutDownTask to be executed when program is terminated
     ShutDownTask shutDownTask = new ShutDownTask();
     Runtime.getRuntime().addShutdownHook(shutDownTask);
-
-    //transport.open();
 
     try {
       transport.open();

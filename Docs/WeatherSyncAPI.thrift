@@ -11,7 +11,7 @@
  * "Asterisk" should work for C, C++, C#, Go, Lua, Java, Python, Perl...
  * See https://thrift.apache.org/docs/idl#namespace
  */
-namespace *  weatherSync
+namespace *  weatherservice.weatherSync
 
 /**
  * This Enum is used to send different system warnings
@@ -121,7 +121,7 @@ service WeatherSync{
     * weatherReport: a new weatherReport.
     * userId: userId of the location which generated the weatherReport.
     */
-    bool syncWeatherReport(1: SystemWarning systemWarning, 2: i64 userId) throws (1: UnknownUserException unknownUserException),
+    bool syncWeatherReport(1: WeatherReport weatherReport, 2: i64 userId) throws (1: UnknownUserException unknownUserException),
 
    /*
     * syncSystemWarning
@@ -132,7 +132,7 @@ service WeatherSync{
     * systemWarning: SystemWarning sent by the client.
     * userId: userId of the location which generated the SystemWarning.
     */
-    bool syncSystemWarning(1: WeatherReport weatherReport, 2: i64 userId) throws (1: UnknownUserException unknownUserException)
+    bool syncSystemWarning(1: SystemWarning systemWarning, 2: i64 userId) throws (1: UnknownUserException unknownUserException)
 
 }
 
