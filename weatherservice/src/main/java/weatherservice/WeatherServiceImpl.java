@@ -45,12 +45,18 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   private HashMap<Long, Location> idLocations = new HashMap<>();
   private HashSet<Long> activeUsers = new HashSet<>() {
   };
-  private static ExecutorService executorService;
 
-  //queue of weatherReports to be updated when workerthread is available
+  //synchronisation thread handlers
+  private static ExecutorService syncReportExecutor;
+  private static ExecutorService syncLoginExecutor;
+
+  //synchronisation queues
   private Queue<Map.Entry<Long, WeatherReport>> syncReportUserIdQueue = new LinkedList<Map.Entry<Long, WeatherReport>>();
+  private Queue<Map.Entry<Long, Location>> syncLoginQueue = new LinkedList<Map.Entry<Long, Location>>();
 
+  //synchronisation runnables
   private SyncReportsRunnable syncReportsRunnable;
+  private SyncLoginRunnable syncLoginsRunnable;
 
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
 
@@ -73,9 +79,11 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     clientTransport.put(syncClient1, transportClient1);
     clientTransport.put(syncClient2, transportClient2);
 
-    //the executorService manages a single thread for synchronizing weather reports among the thrift servers
-    executorService = Executors.newSingleThreadExecutor();
+    //the syncReportExecutor manages a single thread for synchronizing weather reports among the thrift servers
+    syncReportExecutor = Executors.newSingleThreadExecutor();
     syncReportsRunnable = new SyncReportsRunnable();
+    syncLoginExecutor = Executors.newSingleThreadExecutor();
+    syncLoginsRunnable = new SyncLoginRunnable();
   }
 
 
@@ -113,7 +121,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     //send login data to weatherAPI thrift servers
-    performSyncLoginData(location, userId);
+    syncLoginQueue.add(new SimpleEntry<>(Long.valueOf(userId), location));
+    //performSyncLoginData(location, userId);
+    syncLoginExecutor.execute(syncLoginsRunnable);
 
     // login location with its UserId if not already logged in
     if (!activeUsers.contains(LocationIds.get(location))) {
@@ -155,7 +165,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
     //seperate thread sends weatherReport to weatherAPI servers
     syncReportUserIdQueue.add(new SimpleEntry<>(Long.valueOf(sessionToken), report));
-    executorService.execute(syncReportsRunnable);
+    syncReportExecutor.execute(syncReportsRunnable);
 
     // write report to file
     try {
@@ -595,13 +605,32 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     public void run() {
-      System.out.println("Start syncrunnable thread " + this);
+      System.out.println("Start syncRunnable thread " + this);
       Map.Entry<Long, WeatherReport> entry = syncReportUserIdQueue.poll();
       if (!entry.equals(null)) {
         WeatherReport report = entry.getValue();
         long userId = entry.getKey();
         performSyncWeatherReport(report, userId);
-        System.out.println("close syncrunnable thread " + this);
+        System.out.println("close syncRunnable thread " + this);
+      }
+    }
+
+  }
+
+
+  public class SyncLoginRunnable implements Runnable {
+
+    public SyncLoginRunnable() {
+    }
+
+    public void run() {
+      System.out.println("Start syncLoginRunnable thread " + this);
+      Map.Entry<Long, Location> entry = syncLoginQueue.poll();
+      if (!entry.equals(null)) {
+        Location location = entry.getValue();
+        long userId = entry.getKey();
+        performSyncLoginData(location, userId);
+        System.out.println("close syncLoginRunnable thread " + this);
       }
     }
 

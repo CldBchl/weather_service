@@ -29,19 +29,23 @@ public class RpcServer implements Runnable {
     serverPort = port;
     this.syncServerPort1 = syncServerPort1;
     this.syncServerPort2 = syncServerPort2;
-    serverName=name;
+    serverName = name;
   }
 
   public void start() throws TTransportException {
-    WeatherServiceImpl weatherServiceImpl= new WeatherServiceImpl(serverName, syncServerIp, syncServerPort1, syncServerPort2);
+    WeatherServiceImpl weatherServiceImpl = new WeatherServiceImpl(serverName, syncServerIp,
+        syncServerPort1, syncServerPort2);
     TMultiplexedProcessor processor = new TMultiplexedProcessor();
-    processor.registerProcessor("WeatherAPI",new Weather.Processor<>(weatherServiceImpl));
+    processor.registerProcessor("WeatherAPI", new Weather.Processor<>(weatherServiceImpl));
     processor.registerProcessor("WeatherSync", new WeatherSync.Processor<>(weatherServiceImpl));
 
     TServerTransport serverTransport = new TServerSocket(serverPort);
-    server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
+    server = new TThreadPoolServer(
+        new TThreadPoolServer.Args(serverTransport).processor(processor));
 
-    log.log(Level.INFO, "Starting server "+serverName+",port "+serverPort+", connecting to port "+syncServerPort1+" and "+syncServerPort2);
+    log.log(Level.INFO,
+        "Starting server " + serverName + ",port " + serverPort + ", connecting to port "
+            + syncServerPort1 + " and " + syncServerPort2);
 
     server.serve();
 
