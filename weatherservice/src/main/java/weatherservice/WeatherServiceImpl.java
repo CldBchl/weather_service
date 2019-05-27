@@ -5,9 +5,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -31,12 +38,19 @@ import weatherservice.weatherSync.WeatherSync.Client;
 
 public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
+  private static final Logger log = Logger.getLogger(WeatherServiceImpl.class.getName());
   private String serverName;
   private HashMap<Long, SystemWarning> systemWarnings = new HashMap<>();
   private HashMap<Location, Long> LocationIds = new HashMap<>();
   private HashMap<Long, Location> idLocations = new HashMap<>();
   private HashSet<Long> activeUsers = new HashSet<>() {
   };
+  private static ExecutorService executorService;
+
+  //queue of weatherReports to be updated when workerthread is available
+  private Queue<Map.Entry<Long, WeatherReport>> syncReportUserIdQueue = new LinkedList<Map.Entry<Long, WeatherReport>>();
+
+  private SyncReportsRunnable syncReportsRunnable;
 
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
 
@@ -59,6 +73,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     clientTransport.put(syncClient1, transportClient1);
     clientTransport.put(syncClient2, transportClient2);
 
+    //the executorService manages a single thread for synchronizing weather reports among the thrift servers
+    executorService = Executors.newSingleThreadExecutor();
+    syncReportsRunnable = new SyncReportsRunnable();
   }
 
 
@@ -88,7 +105,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       throw new LocationException(location, "location has unset field");
     }
 
-    // generate UserDd for location if doesnt exist
+    // generate UserId for location if doesnt exist
     if (!LocationIds.containsKey(location)) {
       userId = generateUserId();
       LocationIds.put(location, userId);
@@ -96,7 +113,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     //send login data to weatherAPI thrift servers
-    //performSyncLoginData(location, userId);
+    performSyncLoginData(location, userId);
 
     // login location with its UserId if not already logged in
     if (!activeUsers.contains(LocationIds.get(location))) {
@@ -113,7 +130,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   synchronized public boolean logout(long sessionToken) throws UnknownUserException, TException {
 
     //send logout data to weatherAPI thrift servers
-    //performSyncLogoutData(sessionToken);
+    performSyncLogoutData(sessionToken);
 
     if (activeUsers.contains(sessionToken)) {
       if (activeUsers.remove(sessionToken)) {
@@ -136,8 +153,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       throw new UnknownUserException(sessionToken, "unknown user");
     }
 
-    //send weatherReport to weatherAPI servers
-    //performSyncWeatherReport(report, sessionToken);
+    //seperate thread sends weatherReport to weatherAPI servers
+    syncReportUserIdQueue.add(new SimpleEntry<>(Long.valueOf(sessionToken), report));
+    executorService.execute(syncReportsRunnable);
 
     // write report to file
     try {
@@ -273,8 +291,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     return report;
   }
 
-  //WeatherReport(report:null, location:Location(locationID:1, name:Station2, latitude:23.24, longitude:45.45),
-  // temperature:12.34, humidity:12, windStrength:0, rainfall:2.63, atmosphericpressure:0, windDirection:0, dateTime:2019-05-18T09:31:46+02:00)
 
   @Override
   public WeatherWarning checkWeatherWarnings(long userId) throws UnknownUserException, TException {
@@ -310,7 +326,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     //send system warning update to other weatherAPI servers
-    performSyncSystemWarning(systemWarning, userId);
+    //./performSyncSystemWarning(systemWarning, userId);
 
     systemWarnings.putIfAbsent(userId, systemWarning);
 
@@ -319,19 +335,25 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   }
 
   @Override
-  public boolean syncLoginData(weatherservice.weatherSync.Location location, long userId)
+  synchronized public boolean syncLoginData(weatherservice.weatherSync.Location location,
+      long userId)
       throws LoggedInUserException, TException {
+
+    //parse syncLocation to weatherLocation
+    Location weatherLoacation = parseSyncLocation(location);
+
     if (activeUsers.contains(userId)) {
       throw new LoggedInUserException(userId, "user is already in active users list");
     } else {
       //add location and user id to lists
-      if (!LocationIds.containsKey(parseSyncLocation(location))) {
-        LocationIds.put(parseSyncLocation(location), userId);
-        idLocations.put(userId, parseSyncLocation(location));
+      if (!LocationIds.containsKey(weatherLoacation)) {
+        LocationIds.put(weatherLoacation, userId);
+        idLocations.put(userId, weatherLoacation);
       }
       //add location to active users
-      if (!activeUsers.contains(LocationIds.get(location))) {
-        activeUsers.add(LocationIds.get(location));
+      if (!activeUsers.contains(LocationIds.get(weatherLoacation))) {
+        activeUsers.add(LocationIds.get(weatherLoacation));
+        System.out.println("login server " + serverName + ", active users: " + activeUsers);
         return true;
       }
       return false;
@@ -341,6 +363,10 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   @Override
   public boolean syncLogoutData(long userId)
       throws weatherservice.weatherSync.UnknownUserException, TException {
+
+    //send logout data to weatherAPI servers
+    performSyncLogoutData(userId);
+
     if (activeUsers.contains(userId)) {
       if (activeUsers.remove(userId)) {
         systemWarnings.remove(userId);
@@ -355,19 +381,50 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   }
 
   @Override
-  public boolean syncWeatherReport(weatherservice.weatherSync.WeatherReport weatherReport,
+  synchronized public boolean syncWeatherReport(weatherservice.weatherSync.WeatherReport report,
       long userId) throws weatherservice.weatherSync.UnknownUserException, TException {
 
-    return sendWeatherReport(parseSyncWeatherReport(weatherReport), userId);
+    WeatherReport weatherReport = parseSyncWeatherReport(report);
+
+    System.out
+        .println("weatherreport sync server " + serverName + ", active users: " + activeUsers);
+
+    if (!validateSession(userId)) {
+      throw new UnknownUserException(userId, "unknown user");
+    }
+
+    // write report to file
+    try {
+      new File("./serverData/" + serverName).mkdirs();
+      FileWriter file = new FileWriter("./serverData/" + serverName + "/" + userId + ".txt",
+          true);
+      file.append(weatherReport.toString());
+      file.append("\n");
+      file.flush();
+      return true;
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Could not create or write to file");
+    }
+    return false;
+
   }
 
   @Override
   public boolean syncSystemWarning(weatherservice.weatherSync.SystemWarning systemWarning,
       long userId) throws weatherservice.weatherSync.UnknownUserException, TException {
 
+    if (!validateSession(userId)) {
+      throw new UnknownUserException(userId, "unknown user");
+    }
+
     SystemWarning warning = SystemWarning.findByValue(systemWarning.getValue());
 
-    return sendWarning(warning, userId);
+    systemWarnings.putIfAbsent(userId, warning);
+
+    // validate if systemWarning got correctly saved
+    return warning == systemWarnings.get(userId);
+
   }
 
   private weatherservice.thrift.Location parseSyncLocation(
@@ -382,13 +439,11 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     return weatherLocation;
   }
 
-
   private weatherservice.thrift.WeatherReport parseSyncWeatherReport(
       weatherservice.weatherSync.WeatherReport report) {
     weatherservice.thrift.WeatherReport weatherReport = new weatherservice.thrift.WeatherReport();
     weatherReport.location = parseSyncLocation(report.location);
     weatherReport.dateTime = report.dateTime;
-    weatherReport.report = Report.findByValue(report.report.getValue());
     weatherReport.humidity = report.humidity;
     weatherReport.rainfall = report.rainfall;
     weatherReport.temperature = report.temperature;
@@ -413,7 +468,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     weatherservice.weatherSync.WeatherReport weatherReport = new weatherservice.weatherSync.WeatherReport();
     weatherReport.location = parseWeatherLocation(report.location);
     weatherReport.dateTime = report.dateTime;
-    weatherReport.report = weatherservice.weatherSync.Report.findByValue(report.report.getValue());
     weatherReport.humidity = report.humidity;
     weatherReport.rainfall = report.rainfall;
     weatherReport.temperature = report.temperature;
@@ -423,103 +477,134 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   }
 
   private void performSyncLoginData(Location location, long userId) {
-
+//send updates to every client in the clientTransport map
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
       Client client = entry.getKey();
       TTransport transport = entry.getValue();
       try {
-        transport.open();
-
+        if (!transport.isOpen()) {
+          transport.open();
+        }
         try {
           if (client.syncLoginData(parseWeatherLocation(location), userId)) {
-            System.out
-                .println("Login update successfully sent to server " + transport.toString());
+            log.log(Level.INFO, "Login update successfully sent to server " + transport.toString());
+          } else {
+            log.log(Level.WARNING,
+                "Error when sending login update to server " + transport.toString());
           }
         } catch (TException e) {
           e.printStackTrace();
         }
-        transport.close();
       } catch (TTransportException e) {
-        System.out
-            .println("Could not send login update to server " + transport.toString());
+        log.log(Level.WARNING,
+            "Connection error: Could not send login update to server " + transport.toString());
       }
     }
   }
 
   private void performSyncLogoutData(long userId) {
+    //send updates to every client in the clientTransport map
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
       Client client = entry.getKey();
       TTransport transport = entry.getValue();
       try {
-        transport.open();
-
+        if (!transport.isOpen()) {
+          transport.open();
+        }
         try {
           if (client.syncLogoutData(userId)) {
-            System.out
-                .println("Logout update successfully sent to server " + transport.toString());
+            log.log(Level.INFO,
+                "Logout update successfully sent to server " + transport.toString());
+          } else {
+            log.log(Level.WARNING,
+                "Error when sending logout update to server " + transport.toString());
           }
         } catch (TException e) {
           e.printStackTrace();
         }
         transport.close();
       } catch (TTransportException e) {
-        System.out
-            .println("Could not send logout update to server" + transport.toString());
+        log.log(Level.WARNING,
+            "Connection error: Could not send logout update to server" + transport.toString());
       }
     }
 
   }
 
   private void performSyncWeatherReport(WeatherReport weatherReport, long userId) {
-
+//send updates to every client in the clientTransport map
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
       Client client = entry.getKey();
       TTransport transport = entry.getValue();
       try {
-        transport.open();
-
+        if (!transport.isOpen()) {
+          transport.open();
+        }
         try {
           if (client.syncWeatherReport(parseWeatherReport(weatherReport), userId)) {
-            System.out
-                .println(
-                    "Weather report update successfully sent to server " + transport.toString());
+            log.log(Level.INFO,
+                "Weather report update successfully sent to server " + transport.toString());
+          } else {
+            log.log(Level.WARNING,
+                "Error when sending weather report update to server " + transport.toString());
           }
         } catch (TException e) {
           e.printStackTrace();
         }
-        transport.close();
       } catch (TTransportException e) {
-        System.out.println(
-            "Could not send weatherReport update to server " + transport.toString());
+        log.log(Level.WARNING,
+            "Connection error: Could not send weatherReport update to server " + transport
+                .toString());
       }
     }
   }
 
   private void performSyncSystemWarning(SystemWarning systemWarning, long userId) {
-
+//send updates to every client in the clientTransport map
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
       Client client = entry.getKey();
       TTransport transport = entry.getValue();
       try {
-        transport.open();
-
+        if (!transport.isOpen()) {
+          transport.open();
+        }
         try {
           weatherservice.weatherSync.SystemWarning warning = weatherservice.weatherSync.SystemWarning
               .findByValue(systemWarning.getValue());
           if (client.syncSystemWarning(warning, userId)) {
-            System.out
-                .println("System warning update successful sent to server " + transport.toString());
+            log.log(Level.INFO,
+                "System warning update successful sent to server " + transport.toString());
+          } else {
+            log.log(Level.WARNING,
+                "Error when sending system warning update to server " + transport.toString());
           }
         } catch (TException e) {
           e.printStackTrace();
         }
-        transport.close();
       } catch (TTransportException e) {
-        System.out.println(
-            "Could not send systemWarning update to server " + transport.toString());
+        log.log(Level.WARNING,
+            "Connection error: Could not send systemWarning update to server " + transport
+                .toString());
       }
     }
   }
 
+  public class SyncReportsRunnable implements Runnable {
+
+    public SyncReportsRunnable() {
+    }
+
+    public void run() {
+      System.out.println("Start syncrunnable thread " + this);
+      Map.Entry<Long, WeatherReport> entry = syncReportUserIdQueue.poll();
+      if (!entry.equals(null)) {
+        WeatherReport report = entry.getValue();
+        long userId = entry.getKey();
+        performSyncWeatherReport(report, userId);
+        System.out.println("close syncrunnable thread " + this);
+      }
+    }
+
+  }
 
 }
