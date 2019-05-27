@@ -132,7 +132,39 @@ service WeatherSync{
     * systemWarning: SystemWarning sent by the client.
     * userId: userId of the location which generated the SystemWarning.
     */
-    bool syncSystemWarning(1: SystemWarning systemWarning, 2: i64 userId) throws (1: UnknownUserException unknownUserException)
+    bool syncSystemWarning(1: SystemWarning systemWarning, 2: i64 userId) throws (1: UnknownUserException unknownUserException),
+
+    /*
+    * syncReportFiles
+    * This call requests all available weather report files.
+    * It returns a map of the file names and the file content.
+    *
+    */
+    map<string,string> syncReportFiles(),
+
+    /*
+    * syncActiveUsers
+    * This call requests the set of active users.
+    * It returns a map of active users.
+    *
+    */
+    set<i64> syncActiveUsers(),
+
+    /*
+    * syncLocationIds
+    * This call requests the map of locations to Ids.
+    * It returns a map of locations to Ids.
+    *
+    */
+    map<Location,i64> syncLocationIds(),
+
+    /*
+    * syncIdLocations
+    * This call requests the map of Ids to Locations.
+    * It returns a map of Ids to Locations.
+    *
+    */
+    map<i64, Location> syncIdLocations()
 
 }
 

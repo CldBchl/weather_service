@@ -5,12 +5,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -64,6 +67,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   private SyncWarningRunnable syncWarningRunnable;
   private SyncLogoutRunnable syncLogoutRunnable;
 
+  //synchronisation data will be sent via these clients
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
 
   public WeatherServiceImpl(String name, String syncServerIp,
@@ -85,7 +89,8 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     clientTransport.put(syncClient1, transportClient1);
     clientTransport.put(syncClient2, transportClient2);
 
-    //the syncReportExecutor manages a single thread for synchronizing weather reports among the thrift servers
+
+    //the syncReportExecutors manage a single thread for synchronizing login, logout, reports, warnings
     syncReportExecutor = Executors.newSingleThreadExecutor();
     syncReportsRunnable = new SyncReportsRunnable();
     syncLoginExecutor = Executors.newSingleThreadExecutor();
@@ -94,8 +99,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     syncWarningRunnable = new SyncWarningRunnable();
     syncLogoutExecutor = Executors.newSingleThreadExecutor();
     syncLogoutRunnable = new SyncLogoutRunnable();
-
-
   }
 
 
@@ -442,6 +445,50 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     // validate if systemWarning got correctly saved
     return warning == systemWarnings.get(userId);
 
+  }
+
+  @Override
+  public Map<String, String> syncReportFiles() {
+
+    Map<String, String> fileMap= new HashMap<> ();
+
+    String fileContent;
+
+    if(!activeUsers.isEmpty()){
+      for(Long userId:activeUsers){
+
+        try {
+          fileContent = new String(
+              Files.readAllBytes(Paths.get("./serverData/" +serverName+"/" + userId + ".txt")));
+          fileMap.put(userId.toString(), fileContent);
+
+        } catch (IOException e) {
+          log.log(Level.INFO,
+              "No file for user "+userId);
+        }
+      }
+      return fileMap;
+    }
+    else{
+      log.log(Level.INFO,
+          "No files to be synchronized");
+    return null;
+    }
+  }
+
+  @Override
+  public Set<Long> syncActiveUsers() throws TException {
+    return null;
+  }
+
+  @Override
+  public Map<weatherservice.weatherSync.Location, Long> syncLocationIds() throws TException {
+    return null;
+  }
+
+  @Override
+  public Map<Long, weatherservice.weatherSync.Location> syncIdLocations() throws TException {
+    return null;
   }
 
   private weatherservice.thrift.Location parseSyncLocation(
