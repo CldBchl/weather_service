@@ -50,16 +50,19 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   private static ExecutorService syncReportExecutor;
   private static ExecutorService syncLoginExecutor;
   private static ExecutorService syncWarningExecutor;
+  private static ExecutorService syncLogoutExecutor;
 
   //synchronisation queues
   private Queue<Map.Entry<Long, WeatherReport>> syncReportUserIdQueue = new LinkedList<Map.Entry<Long, WeatherReport>>();
   private Queue<Map.Entry<Long, Location>> syncLoginQueue = new LinkedList<Map.Entry<Long, Location>>();
   private Queue<Map.Entry<Long, SystemWarning>> syncWarningQueue = new LinkedList<Map.Entry<Long, SystemWarning>>();
+  private Queue<Long> syncLogoutQueue = new LinkedList<Long>();
 
   //synchronisation runnables
   private SyncReportsRunnable syncReportsRunnable;
   private SyncLoginRunnable syncLoginsRunnable;
   private SyncWarningRunnable syncWarningRunnable;
+  private SyncLogoutRunnable syncLogoutRunnable;
 
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
 
@@ -89,6 +92,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     syncLoginsRunnable = new SyncLoginRunnable();
     syncWarningExecutor = Executors.newSingleThreadExecutor();
     syncWarningRunnable = new SyncWarningRunnable();
+    syncLogoutExecutor = Executors.newSingleThreadExecutor();
+    syncLogoutRunnable = new SyncLogoutRunnable();
+
 
   }
 
@@ -125,7 +131,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
     //send login data to weatherAPI thrift servers
     syncLoginQueue.add(new SimpleEntry<>(Long.valueOf(userId), location));
-    //performSyncLoginData(location, userId);
     syncLoginExecutor.execute(syncLoginsRunnable);
 
     // login location with its UserId if not already logged in
@@ -143,7 +148,8 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   synchronized public boolean logout(long sessionToken) throws UnknownUserException, TException {
 
     //send logout data to weatherAPI thrift servers
-    performSyncLogoutData(sessionToken);
+    syncLogoutQueue.add(sessionToken);
+    syncLogoutExecutor.execute(syncLogoutRunnable);
 
     if (activeUsers.contains(sessionToken)) {
       if (activeUsers.remove(sessionToken)) {
@@ -166,7 +172,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       throw new UnknownUserException(sessionToken, "unknown user");
     }
 
-    //seperate thread sends weatherReport to weatherAPI servers
+    //a separate thread sends weatherReport to weatherAPI servers
     syncReportUserIdQueue.add(new SimpleEntry<>(Long.valueOf(sessionToken), report));
     syncReportExecutor.execute(syncReportsRunnable);
 
@@ -338,7 +344,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       throw new UnknownUserException(userId, "unknown user");
     }
 
-    //send system warning update to other weatherAPI servers
+    //separate thread sends system warning update to other weatherAPI servers
     syncWarningQueue.add(new SimpleEntry<>(userId, systemWarning));
     syncWarningExecutor.execute(syncWarningRunnable);
 
@@ -377,9 +383,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   @Override
   public boolean syncLogoutData(long userId)
       throws weatherservice.weatherSync.UnknownUserException, TException {
-
-    //send logout data to weatherAPI servers
-    performSyncLogoutData(userId);
 
     if (activeUsers.contains(userId)) {
       if (activeUsers.remove(userId)) {
@@ -657,5 +660,25 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
   }
+
+  public class SyncLogoutRunnable implements Runnable {
+
+    public SyncLogoutRunnable() {
+    }
+
+    public void run() {
+      System.out.println("Start syncLogoutRunnable thread " + this);
+      try{
+      long userId = syncLogoutQueue.poll();
+      performSyncLogoutData(userId);
+      System.out.println("close syncLogoutRunnable thread " + this);
+    }
+    catch(NullPointerException e){
+      log.log(Level.WARNING,
+          "There aren't any users to be logged out");
+    }
+  }
+
+}
 
 }
