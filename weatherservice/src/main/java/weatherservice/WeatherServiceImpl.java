@@ -49,14 +49,17 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   //synchronisation thread handlers
   private static ExecutorService syncReportExecutor;
   private static ExecutorService syncLoginExecutor;
+  private static ExecutorService syncWarningExecutor;
 
   //synchronisation queues
   private Queue<Map.Entry<Long, WeatherReport>> syncReportUserIdQueue = new LinkedList<Map.Entry<Long, WeatherReport>>();
   private Queue<Map.Entry<Long, Location>> syncLoginQueue = new LinkedList<Map.Entry<Long, Location>>();
+  private Queue<Map.Entry<Long, SystemWarning>> syncWarningQueue = new LinkedList<Map.Entry<Long, SystemWarning>>();
 
   //synchronisation runnables
   private SyncReportsRunnable syncReportsRunnable;
   private SyncLoginRunnable syncLoginsRunnable;
+  private SyncWarningRunnable syncWarningRunnable;
 
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
 
@@ -84,14 +87,14 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     syncReportsRunnable = new SyncReportsRunnable();
     syncLoginExecutor = Executors.newSingleThreadExecutor();
     syncLoginsRunnable = new SyncLoginRunnable();
+    syncWarningExecutor = Executors.newSingleThreadExecutor();
+    syncWarningRunnable = new SyncWarningRunnable();
+
   }
 
 
-  private long generateUserId() {
-    long id = 0;
-    while (LocationIds.containsValue(id)) {
-      id++;
-    }
+  private long generateUserId(int locationId) {
+    long id = locationId;
     return id;
   }
 
@@ -115,7 +118,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
     // generate UserId for location if doesnt exist
     if (!LocationIds.containsKey(location)) {
-      userId = generateUserId();
+      userId = generateUserId(location.locationID);
       LocationIds.put(location, userId);
       idLocations.put(userId, location);
     }
@@ -336,7 +339,8 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
     //send system warning update to other weatherAPI servers
-    //./performSyncSystemWarning(systemWarning, userId);
+    syncWarningQueue.add(new SimpleEntry<>(userId, systemWarning));
+    syncWarningExecutor.execute(syncWarningRunnable);
 
     systemWarnings.putIfAbsent(userId, systemWarning);
 
@@ -631,6 +635,24 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
         long userId = entry.getKey();
         performSyncLoginData(location, userId);
         System.out.println("close syncLoginRunnable thread " + this);
+      }
+    }
+
+  }
+
+  public class SyncWarningRunnable implements Runnable {
+
+    public SyncWarningRunnable() {
+    }
+
+    public void run() {
+      System.out.println("Start syncWarningRunnable thread " + this);
+      Map.Entry<Long, SystemWarning> entry = syncWarningQueue.poll();
+      if (!entry.equals(null)) {
+        SystemWarning warning = entry.getValue();
+        long userId = entry.getKey();
+        performSyncSystemWarning(warning, userId);
+        System.out.println("close syncWarningRunnable thread " + this);
       }
     }
 
