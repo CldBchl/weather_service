@@ -103,13 +103,13 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     syncBootExecutor = Executors.newSingleThreadExecutor();
     syncBootRunnable = new SyncBootRunnable();
 
+    //separate executor thread checks if there is data to synchronize
     syncBootExecutor.execute(syncBootRunnable);
   }
 
 
   private long generateUserId(int locationId) {
-    long id = locationId;
-    return id;
+    return (long) locationId;
   }
 
   private boolean validateLocation(Location location) {
@@ -137,7 +137,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       idLocations.put(userId, location);
     }
 
-    //send login data to weatherAPI thrift servers
+    //separate executor thread sends login data to weatherAPI thrift servers
     syncLoginQueue.add(new SimpleEntry<>(Long.valueOf(userId), location));
     syncLoginExecutor.execute(syncLoginsRunnable);
 
@@ -155,7 +155,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   @Override
   synchronized public boolean logout(long sessionToken) throws UnknownUserException, TException {
 
-    //send logout data to weatherAPI thrift servers
+    //separate executor thread sends logout data to weatherAPI thrift servers
     syncLogoutQueue.add(sessionToken);
     syncLogoutExecutor.execute(syncLogoutRunnable);
 
@@ -180,8 +180,8 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       throw new UnknownUserException(sessionToken, "unknown user");
     }
 
-    //a separate thread sends weatherReport to weatherAPI servers
-    syncReportUserIdQueue.add(new SimpleEntry<>(Long.valueOf(sessionToken), report));
+    //separate executor thread sends weatherReport to weatherAPI servers
+    syncReportUserIdQueue.add(new SimpleEntry<>(sessionToken, report));
     syncReportExecutor.execute(syncReportsRunnable);
 
     // write report to file
@@ -351,13 +351,11 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     if (!validateSession(userId)) {
       throw new UnknownUserException(userId, "unknown user");
     }
-
-    //separate thread sends system warning update to other weatherAPI servers
+    //separate executor thread sends system warning update to other weatherAPI servers
     syncWarningQueue.add(new SimpleEntry<>(userId, systemWarning));
     syncWarningExecutor.execute(syncWarningRunnable);
 
     systemWarnings.putIfAbsent(userId, systemWarning);
-
     // validate if systemWarning got correctly saved
     return systemWarning == systemWarnings.get(userId);
   }
@@ -399,7 +397,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       } else {
         return false;
       }
-
     } else {
       throw new UnknownUserException(userId, "user was not found in active users list");
     }
@@ -508,11 +505,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
           "No Locations to be synchronized");
     }
     return syncLocationIdsMap;
-  }
-
-  @Override
-  public Map<Long, weatherservice.weatherSync.Location> syncIdLocations() throws TException {
-    return null;
   }
 
   private weatherservice.thrift.Location parseSyncLocation(
@@ -681,7 +673,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   private void performRebootSynchronization() {
 
     //syncSuccessful makes sure that we only try to synchronize ONCE
-    // --> if first client cannot be reached, the the other servers are also booting
+    // --> if first client cannot be reached we assume that the other servers are also booting
     boolean syncSuccessful = false;
 
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
@@ -716,13 +708,15 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
             e.printStackTrace();
           }
         } catch (TTransportException e) {
-          log.log(Level.INFO, "Cannot connect to server for synchronization --> everyone is booting");
+          log.log(Level.INFO,
+              "Cannot connect to server for synchronization --> everyone is booting");
         }
       }
     }
 
   }
 
+  //this methods updates both the idLocations and the LocationIds maps
   private void insertLocationAndIds(
       Map<weatherservice.weatherSync.Location, Long> syncLocationIds) {
     int i = 0;
@@ -766,7 +760,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
   }
 
-
   public class SyncReportsRunnable implements Runnable {
 
     public SyncReportsRunnable() {
@@ -784,7 +777,6 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
 
   }
-
 
   public class SyncLoginRunnable implements Runnable {
 
@@ -850,6 +842,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       System.out.println("Start syncBootRunnable thread " + this);
       performRebootSynchronization();
     }
+
   }
 
 }

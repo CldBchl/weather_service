@@ -25,10 +25,10 @@ sensorInterval=2
 port=7500
 
 # ip0 is local ip
-ip0=127.0.0.1
+ip0=0.0.0.0
 
 #ip1 set ip1 as target ip, if you want to send data to another pc
-ip1=127.0.0.1
+ip1=0.0.0.0
 
 # saves pids of spawned programms in a pidfile to kill later
 if [[ -f ${pidFile} ]];

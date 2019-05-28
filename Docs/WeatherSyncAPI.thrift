@@ -156,15 +156,7 @@ service WeatherSync{
     * It returns a map of locations to Ids.
     *
     */
-    map<Location,i64> syncLocationIds(),
-
-    /*
-    * syncIdLocations
-    * This call requests the map of Ids to Locations.
-    * It returns a map of Ids to Locations.
-    *
-    */
-    map<i64, Location> syncIdLocations()
+    map<Location,i64> syncLocationIds()
 
 }
 
