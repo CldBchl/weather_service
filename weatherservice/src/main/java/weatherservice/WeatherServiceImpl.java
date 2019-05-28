@@ -50,10 +50,11 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   };
 
   //synchronisation thread handlers
-  private static ExecutorService syncReportExecutor;
-  private static ExecutorService syncLoginExecutor;
-  private static ExecutorService syncWarningExecutor;
-  private static ExecutorService syncLogoutExecutor;
+  private ExecutorService syncReportExecutor;
+  private ExecutorService syncLoginExecutor;
+  private ExecutorService syncWarningExecutor;
+  private ExecutorService syncLogoutExecutor;
+  private ExecutorService syncBootExecutor;
 
   //synchronisation queues
   private Queue<Map.Entry<Long, WeatherReport>> syncReportUserIdQueue = new LinkedList<Map.Entry<Long, WeatherReport>>();
@@ -66,6 +67,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   private SyncLoginRunnable syncLoginsRunnable;
   private SyncWarningRunnable syncWarningRunnable;
   private SyncLogoutRunnable syncLogoutRunnable;
+  private SyncBootRunnable syncBootRunnable;
 
   //synchronisation data will be sent via these clients
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
@@ -89,8 +91,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     clientTransport.put(syncClient1, transportClient1);
     clientTransport.put(syncClient2, transportClient2);
 
-
-    //the syncReportExecutors manage a single thread for synchronizing login, logout, reports, warnings
+    //the syncReportExecutors manage a single thread for synchronizing login, logout, reports, warnings, reboot synchronization
     syncReportExecutor = Executors.newSingleThreadExecutor();
     syncReportsRunnable = new SyncReportsRunnable();
     syncLoginExecutor = Executors.newSingleThreadExecutor();
@@ -99,6 +100,10 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     syncWarningRunnable = new SyncWarningRunnable();
     syncLogoutExecutor = Executors.newSingleThreadExecutor();
     syncLogoutRunnable = new SyncLogoutRunnable();
+    syncBootExecutor = Executors.newSingleThreadExecutor();
+    syncBootRunnable = new SyncBootRunnable();
+
+    syncBootExecutor.execute(syncBootRunnable);
   }
 
 
@@ -448,42 +453,61 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   }
 
   @Override
-  public Map<String, String> syncReportFiles() {
+  public Map<String, String> syncReportFiles() throws TException {
 
-    Map<String, String> fileMap= new HashMap<> ();
+    Map<String, String> fileMap = new HashMap<>();
 
     String fileContent;
 
-    if(!activeUsers.isEmpty()){
-      for(Long userId:activeUsers){
+    if (!idLocations.isEmpty()) {
+      for (Map.Entry<Location, Long> entry : LocationIds.entrySet()) {
 
+        Long userId = entry.getValue();
         try {
           fileContent = new String(
-              Files.readAllBytes(Paths.get("./serverData/" +serverName+"/" + userId + ".txt")));
+              Files.readAllBytes(Paths.get("./serverData/" + serverName + "/" + userId + ".txt")));
           fileMap.put(userId.toString(), fileContent);
 
         } catch (IOException e) {
           log.log(Level.INFO,
-              "No file for user "+userId);
+              "No file for user " + userId);
         }
       }
       return fileMap;
-    }
-    else{
+    } else {
       log.log(Level.INFO,
           "No files to be synchronized");
-    return null;
+      return null;
     }
   }
 
   @Override
   public Set<Long> syncActiveUsers() throws TException {
-    return null;
+
+    Set<Long> activeUserSet = activeUsers;
+
+    if (activeUserSet.isEmpty()) {
+      log.log(Level.INFO,
+          "No active users to be synchronized");
+    }
+    return activeUserSet;
   }
 
   @Override
   public Map<weatherservice.weatherSync.Location, Long> syncLocationIds() throws TException {
-    return null;
+    Map<weatherservice.weatherSync.Location, Long> syncLocationIdsMap = new HashMap<>();
+
+    if (!LocationIds.isEmpty()) {
+      for (Map.Entry<Location, Long> entry : LocationIds.entrySet()) {
+        weatherservice.weatherSync.Location syncLocation = parseWeatherLocation(entry.getKey());
+        Long userId = entry.getValue();
+        syncLocationIdsMap.put(syncLocation, userId);
+      }
+    } else {
+      log.log(Level.INFO,
+          "No Locations to be synchronized");
+    }
+    return syncLocationIdsMap;
   }
 
   @Override
@@ -567,6 +591,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   }
 
   private void performSyncLogoutData(long userId) {
+
     //send updates to every client in the clientTransport map
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
       Client client = entry.getKey();
@@ -653,6 +678,95 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
   }
 
+  private void performRebootSynchronization() {
+
+    //syncSuccessful makes sure that we only try to synchronize ONCE
+    // --> if first client cannot be reached, the the other servers are also booting
+    boolean syncSuccessful = false;
+
+    for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
+      if (!syncSuccessful) {
+        Client client = entry.getKey();
+        TTransport transport = entry.getValue();
+        try {
+          syncSuccessful = true;
+          if (!transport.isOpen()) {
+            transport.open();
+          }
+          try {
+            Map<weatherservice.weatherSync.Location, Long> syncLocationIds = client
+                .syncLocationIds();
+            if (!syncLocationIds.isEmpty()) {
+
+              //add locations and Ids to LocationIds and idLocations maps
+              insertLocationAndIds(syncLocationIds);
+
+              //add active users to active users map
+              Set<Long> syncActiveUsers = client.syncActiveUsers();
+              insertActiveUsers(syncActiveUsers);
+
+              //append or create report files
+              Map<String, String> fileMap = client.syncReportFiles();
+              appendFiles(fileMap);
+            } else {
+              log.log(Level.INFO, "Nothing to synchronize");
+            }
+
+          } catch (TException e) {
+            e.printStackTrace();
+          }
+        } catch (TTransportException e) {
+          log.log(Level.INFO, "Cannot connect to server for synchronization --> everyone is booting");
+        }
+      }
+    }
+
+  }
+
+  private void insertLocationAndIds(
+      Map<weatherservice.weatherSync.Location, Long> syncLocationIds) {
+    int i = 0;
+    for (Map.Entry<weatherservice.weatherSync.Location, Long> entry : syncLocationIds.entrySet()) {
+      Location location = parseSyncLocation(entry.getKey());
+      Long userId = entry.getValue();
+
+      LocationIds.putIfAbsent(location, userId);
+      if (idLocations.putIfAbsent(userId, location).equals(null)) {
+        i++;
+      }
+    }
+    log.log(Level.INFO,
+        i + " Locations and Ids were inserted");
+  }
+
+  private void insertActiveUsers(Set<Long> syncActiveUsers) {
+    activeUsers.addAll(syncActiveUsers);
+    log.log(Level.INFO,
+        +syncActiveUsers.size() + " active users were inserted");
+  }
+
+  private void appendFiles(Map<String, String> fileMap) {
+    for (Map.Entry<String, String> entry : fileMap.entrySet()) {
+      String userId = entry.getKey();
+      String fileContent = entry.getValue();
+
+      try {
+        new File("./serverData/" + serverName).mkdirs();
+        FileWriter file = new FileWriter("./serverData/" + serverName + "/" + userId + ".txt",
+            true);
+        file.append(fileContent);
+        file.append("\n");
+        file.flush();
+        log.log(Level.INFO,
+            "Reports appended for userId " + userId);
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.out.println("Could not create or write to file for user " + userId);
+      }
+    }
+  }
+
+
   public class SyncReportsRunnable implements Runnable {
 
     public SyncReportsRunnable() {
@@ -715,17 +829,27 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
     public void run() {
       System.out.println("Start syncLogoutRunnable thread " + this);
-      try{
-      long userId = syncLogoutQueue.poll();
-      performSyncLogoutData(userId);
-      System.out.println("close syncLogoutRunnable thread " + this);
+      try {
+        long userId = syncLogoutQueue.poll();
+        performSyncLogoutData(userId);
+        System.out.println("close syncLogoutRunnable thread " + this);
+      } catch (NullPointerException e) {
+        log.log(Level.WARNING,
+            "There aren't any users to be logged out");
+      }
     }
-    catch(NullPointerException e){
-      log.log(Level.WARNING,
-          "There aren't any users to be logged out");
-    }
+
   }
 
-}
+  public class SyncBootRunnable implements Runnable {
+
+    public SyncBootRunnable() {
+    }
+
+    public void run() {
+      System.out.println("Start syncBootRunnable thread " + this);
+      performRebootSynchronization();
+    }
+  }
 
 }
