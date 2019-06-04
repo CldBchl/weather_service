@@ -19,6 +19,9 @@ public class RpcServer implements Runnable {
   private int serverPort;
   private String serverName;
 
+  // to stop thread
+  private volatile boolean exit = false;
+
   //default settings for TThreadpoolserver is IP = 0.0.0.0
   private String syncServerIp = "0.0.0.0";
   private int syncServerPort1;

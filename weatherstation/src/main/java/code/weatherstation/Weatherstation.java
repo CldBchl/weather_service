@@ -1,14 +1,7 @@
 package code.weatherstation;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 /*
@@ -28,7 +21,6 @@ public class Weatherstation{
   private static String thriftServerIp;
   private static String thriftServerPort;
   private static String serverPortFile;
-  private int fileRetries = 0;
 
   private String stationName;
 
@@ -51,38 +43,7 @@ public class Weatherstation{
     serverPort = Integer.parseInt(serverP);
   }
 
-  private synchronized String getPort(String portFile) {
-    String line;
-    String returnPort = "";
-    Map<String, Integer> serverPorts = new HashMap<>();
-    ArrayList<Object[]> ports = new ArrayList<>();
 
-    try {
-      File file = new File(portFile);
-      BufferedReader br = new BufferedReader(new FileReader(file));
-      while ((line = br.readLine()) != null) {
-        String[] portline = line.split(",");
-        String port = portline[0];
-        int connections = Integer.parseInt(portline[1]);
-
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-      System.out.println("Could not create or write to file");
-      this.fileRetries++;
-      if (this.fileRetries >= 3) {
-        System.exit(1);
-      } else {
-        getPort(portFile);
-      }
-    }
-    this.fileRetries = 0;
-
-    String minPort = (String) ports.get(0)[0];
-    int minConecctions = (Integer) ports.get(0)[1];
-
-    return returnPort;
-  }
 
   public static void main (String [] args)
   {
@@ -92,8 +53,7 @@ public class Weatherstation{
 
     HttpServer httpServer = new HttpServer(serverPort, serverIpAddress, weatherstation.stationName);
     WStationThriftClient wStationThriftClient = new WStationThriftClient(thriftServerIp,
-        thriftServerPort,
-        weatherstation.stationName, locationId);
+        thriftServerPort, weatherstation.stationName, locationId, serverPortFile);
     SensorDataHandler sensorDataHandler = new SensorDataHandler(receivePort, receiveIpAddress,
         weatherstation.stationName,
         wStationThriftClient);

@@ -4,11 +4,17 @@
 package weatherservice;
 
 
+import org.apache.thrift.transport.TTransportException;
+
+import javax.swing.table.TableRowSorter;
+import java.util.Random;
+
 public class Weatherservice {
 private int thriftPort1;
 private int thriftPort2;
 private int thriftPort3;
 private String name;
+
 
     public Weatherservice(String name, String serverPort1, String serverPort2, String serverPort3) {
         this.name = name;
@@ -18,6 +24,9 @@ private String name;
     }
 
     public static void main(String[] args)  {
+        Random randy = new Random();
+
+
         Weatherservice weatherservice = new Weatherservice(args[0],args[1], args[2] , args[3]);
         System.out.println(weatherservice.name);
 
@@ -34,5 +43,37 @@ private String name;
         RpcServer rpcServer3 = new RpcServer("thriftServer3",weatherservice.thriftPort3, weatherservice.thriftPort1, weatherservice.thriftPort2);
         Thread rpcServerThread3 = new Thread(rpcServer3);
         rpcServerThread3.start();
+
+        while (true){
+            try {
+                Thread.sleep(30 * 1000);
+                 int killer = randy.ints(1,3+1).findAny().getAsInt();
+                 switch (killer){
+                     case 1:
+                         rpcServer1.stop();
+                         Thread.sleep(10 * 1000);
+                         rpcServer1.start();
+                         break;
+                     case 2:
+                         rpcServer2.stop();
+                         Thread.sleep(10 * 1000);
+                         rpcServer2.start();
+                         break;
+                     case 3:
+                         rpcServer3.stop();
+                         Thread.sleep(10 * 1000);
+                         rpcServer3.start();
+                         break;
+                         default:
+
+                 }
+
+            } catch (InterruptedException | TTransportException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+
     }
 }

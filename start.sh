@@ -24,7 +24,7 @@ locationId=0
 sensorInterval=2
 
 # net configuration
-port=7500
+port=8000
 
 # ip0 is local ip
 ip0=0.0.0.0
