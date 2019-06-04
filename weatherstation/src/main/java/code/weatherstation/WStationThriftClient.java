@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TMultiplexedProtocol;
@@ -116,19 +117,31 @@ public class WStationThriftClient implements Runnable {
 
 
     private void tryReconnect() {
+        log.log(Level.INFO,"try to reconnect ");
         int serverPort;
-        if (portIterator < servicePorts.size()) {
+        /*if (portIterator < servicePorts.size()) {
             portIterator++;
         } else {
             portIterator = 0;
-        }
-        serverPort = servicePorts.get(portIterator);
+        }*/
+        portIterator++;
+        portIterator = portIterator % servicePorts.size();
 
+        serverPort = servicePorts.get(portIterator);
+        log.log(Level.INFO, WStationThriftClient.class.getName() + "tries to reconnect " +
+                this.serviceIP + " " + serverPort + " " + portIterator);
         this.transport = new TSocket(this.serviceIP, serverPort);
         TBinaryProtocol protocol = new TBinaryProtocol(transport);
         TMultiplexedProtocol mp = new TMultiplexedProtocol(protocol, "WeatherAPI");
         this.weatherClient = new Weather.Client(mp);
-        this.performLogin(this.weatherClient);
+        try {
+            transport.open();
+        } catch (TTransportException e) {
+            log.log(Level.WARNING, "Error when opening connection");
+            e.printStackTrace();
+        }
+        //this.performLogin(this.weatherClient);
+        //log.log(Level.INFO, WStationThriftClient.class.getName() + "successful reconnect");
     }
 
     private void performSendWeatherReport(Weather.Client client) {
