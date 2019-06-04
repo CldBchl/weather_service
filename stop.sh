@@ -2,6 +2,24 @@
 
 pidFile='pids.pid'
 servicePidFile='services.pid'
+servicePortFile="./servicePorts"
+httpPortFile="./httpPorts"
+
+if [[ -f ${servicePortFile} ]];
+then
+  # delete pidfile
+  rm ${servicePortFile}
+else
+  echo "port file wasn't found. Aborting..."
+fi
+
+if [[ -f ${httpPortFile} ]];
+then
+  # delete pidfile
+  rm ${httpPortFile}
+else
+  echo "port file wasn't found. Aborting..."
+fi
 
 if [[ -f ${pidFile} ]];
 then
@@ -38,3 +56,6 @@ then
 else
   echo "Process file wasn't found. Aborting..."
 fi
+
+
+
