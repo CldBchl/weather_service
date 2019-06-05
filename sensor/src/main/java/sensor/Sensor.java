@@ -164,7 +164,7 @@ public class Sensor{
      */
     public void demoRun(){
         float value = 0;
-        int repeatLoop=8;
+        int repeatLoop=5;
         while (repeatLoop>0) {
             try {
                 Thread.sleep(this.interval * 1000); // seconds to ms

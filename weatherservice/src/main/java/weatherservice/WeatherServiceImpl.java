@@ -765,9 +765,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
         oldFile.delete();
         new File("./serverData/" + serverName).mkdirs();
         FileWriter file = new FileWriter("./serverData/" + serverName + "/" + userId + ".txt",
-            true);
-        file.append(fileContent);
-        file.append("\n");
+            false);
+        file.write(fileContent);
+        //file.write("\n");
         file.flush();
         log.log(Level.INFO,
             "Reports appended for userId " + userId);
