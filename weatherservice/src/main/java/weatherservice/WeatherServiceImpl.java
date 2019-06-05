@@ -742,9 +742,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       Long userId = entry.getValue();
 
       LocationIds.putIfAbsent(location, userId);
-      /*if (idLocations.putIfAbsent(userId, location).equals(null)) {
         i++;
-      }*/
     }
     log.log(Level.INFO,
         i + " Locations and Ids were inserted");
