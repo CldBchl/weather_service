@@ -688,6 +688,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
   }
 
+  // TODO: delete old file, because server gets new one
   private void performRebootSynchronization() {
 
     //syncSuccessful makes sure that we only try to synchronize ONCE
@@ -760,6 +761,8 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       String fileContent = entry.getValue();
 
       try {
+        File oldFile = new File("./serverData/" + serverName);
+        oldFile.delete();
         new File("./serverData/" + serverName).mkdirs();
         FileWriter file = new FileWriter("./serverData/" + serverName + "/" + userId + ".txt",
             true);

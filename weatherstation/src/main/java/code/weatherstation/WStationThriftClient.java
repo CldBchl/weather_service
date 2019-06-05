@@ -100,7 +100,7 @@ public class WStationThriftClient implements Runnable {
 
     private synchronized ArrayList<Integer> getServicePorts(String portFile) {
         String line;
-        ArrayList<Integer> ports= new ArrayList<>();
+        ArrayList<Integer> ports = new ArrayList<>();
 
         try {
             File file = new File(portFile);
@@ -117,7 +117,7 @@ public class WStationThriftClient implements Runnable {
 
 
     private void tryReconnect() {
-        log.log(Level.INFO,"try to reconnect ");
+        log.log(Level.INFO, "try to reconnect ");
         int serverPort;
         /*if (portIterator < servicePorts.size()) {
             portIterator++;
@@ -138,10 +138,9 @@ public class WStationThriftClient implements Runnable {
             transport.open();
         } catch (TTransportException e) {
             log.log(Level.WARNING, "Error when opening connection");
+            tryReconnect();
             e.printStackTrace();
         }
-        //this.performLogin(this.weatherClient);
-        //log.log(Level.INFO, WStationThriftClient.class.getName() + "successful reconnect");
     }
 
     private void performSendWeatherReport(Weather.Client client) {
@@ -233,30 +232,30 @@ public class WStationThriftClient implements Runnable {
     }
 
 
-/*
-private class ShutDownTask ensures a proper logout and closing of connection after program exit
-*/
-private class ShutDownTask extends Thread {
+    /*
+    private class ShutDownTask ensures a proper logout and closing of connection after program exit
+    */
+    private class ShutDownTask extends Thread {
 
-    @Override
-    public void run() {
-        System.out.println("Performing shutdown");
-        //only logout if login was successful
-        if (successfulLogin) {
-            try {
-                boolean successfulLogout = weatherClient.logout(userId);
-                if (successfulLogout) {
-                    //System.out.println("logout");
+        @Override
+        public void run() {
+            System.out.println("Performing shutdown");
+            //only logout if login was successful
+            if (successfulLogin) {
+                try {
+                    boolean successfulLogout = weatherClient.logout(userId);
+                    if (successfulLogout) {
+                        //System.out.println("logout");
+                    }
+                } catch (TException e) {
+                    //e.printStackTrace();
+                    System.out.println("Server already down");
+                    System.exit(2);
                 }
-            } catch (TException e) {
-                //e.printStackTrace();
-                System.out.println("Server already down");
-                System.exit(2);
+                transport.close();
             }
-            transport.close();
         }
     }
-}
 
 }
 
