@@ -36,7 +36,7 @@ public class RpcServer implements Runnable {
   }
 
   public void start() throws TTransportException {
-    WeatherServiceImpl weatherServiceImpl = new WeatherServiceImpl(serverName, syncServerIp,
+    WeatherServiceImpl weatherServiceImpl = new WeatherServiceImpl(serverName, syncServerIp, serverPort,
         syncServerPort1, syncServerPort2);
     TMultiplexedProcessor processor = new TMultiplexedProcessor();
     processor.registerProcessor("WeatherAPI", new Weather.Processor<>(weatherServiceImpl));

@@ -10,8 +10,10 @@ import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +45,7 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
   private static final Logger log = Logger.getLogger(WeatherServiceImpl.class.getName());
   private String serverName;
+  private int serverPort;
   private HashMap<Long, SystemWarning> systemWarnings = new HashMap<>();
   private HashMap<Location, Long> LocationIds = new HashMap<>();
   private HashMap<Long, Location> idLocations = new HashMap<>();
@@ -72,10 +75,11 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   //synchronisation data will be sent via these clients
   private HashMap<WeatherSync.Client, TTransport> clientTransport = new HashMap<>();
 
-  public WeatherServiceImpl(String name, String syncServerIp,
+  public WeatherServiceImpl(String name, String syncServerIp, int myServerPort,
       int syncServerPort1, int syncServerPort2) {
 
     this.serverName = name;
+    this.serverPort = myServerPort;
 
     //initialize weather.sync clients and transport connections
     TTransport transportClient1 = new TSocket(syncServerIp, syncServerPort1);
@@ -491,10 +495,19 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
   }
 
   @Override
-  public Map<weatherservice.weatherSync.Location, Long> syncLocationIds() throws TException {
+  public Map<weatherservice.weatherSync.Location, Long> syncLocationIds(int serverPort)
+      throws TException {
     Map<weatherservice.weatherSync.Location, Long> syncLocationIdsMap = new HashMap<>();
 
     if (!LocationIds.isEmpty()) {
+
+      //add client to clientTransport map
+      TTransport transportClient1 = new TSocket("0.0.0.0", serverPort);
+      TBinaryProtocol protocol1 = new TBinaryProtocol(transportClient1);
+      TMultiplexedProtocol mp1 = new TMultiplexedProtocol(protocol1, "WeatherSync");
+      WeatherSync.Client syncClient1 = new WeatherSync.Client(mp1);
+      clientTransport.put(syncClient1, transportClient1);
+
       for (Map.Entry<Location, Long> entry : LocationIds.entrySet()) {
         weatherservice.weatherSync.Location syncLocation = parseWeatherLocation(entry.getKey());
         Long userId = entry.getValue();
@@ -600,21 +613,25 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
             log.log(Level.WARNING,
                 "Error when sending logout update to server " + transport.toString());
           }
-        } catch (TException e) {
-          e.printStackTrace();
+
+          transport.close();
+        } catch (TTransportException e) {
+          log.log(Level.WARNING,
+              "Connection error at :" + serverName + "Could not send logout update to server"
+                  + transport.toString());
         }
-        transport.close();
-      } catch (TTransportException e) {
-        log.log(Level.WARNING,
-            "Connection error: Could not send logout update to server" + transport.toString());
+      } catch (TException e) {
+        e.printStackTrace();
       }
     }
-
   }
 
   private void performSyncWeatherReport(WeatherReport weatherReport, long userId) {
 //send updates to every client in the clientTransport map
-    for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
+
+    Iterator<Entry<Client, TTransport>> iterator = clientTransport.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<Client, TTransport> entry = iterator.next();
       Client client = entry.getKey();
       TTransport transport = entry.getValue();
       try {
@@ -629,13 +646,14 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
             log.log(Level.WARNING,
                 "Error when sending weather report update to server " + transport.toString());
           }
-        } catch (TException e) {
-          e.printStackTrace();
+        } catch (TTransportException e) {
+          log.log(Level.WARNING,
+              "Connection error: Could not send weatherReport update to server " + transport
+                  .toString() + " Client is removed");
+          iterator.remove();
         }
-      } catch (TTransportException e) {
-        log.log(Level.WARNING,
-            "Connection error: Could not send weatherReport update to server " + transport
-                .toString());
+      } catch (TException e) {
+        e.printStackTrace();
       }
     }
   }
@@ -677,44 +695,43 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     boolean syncSuccessful = false;
 
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
-      if (!syncSuccessful) {
-        Client client = entry.getKey();
-        TTransport transport = entry.getValue();
-        try {
-          syncSuccessful = true;
-          if (!transport.isOpen()) {
-            transport.open();
-          }
-          try {
-            Map<weatherservice.weatherSync.Location, Long> syncLocationIds = client
-                .syncLocationIds();
-            if (!syncLocationIds.isEmpty()) {
 
-              //add locations and Ids to LocationIds and idLocations maps
-              insertLocationAndIds(syncLocationIds);
-
-              //add active users to active users map
-              Set<Long> syncActiveUsers = client.syncActiveUsers();
-              insertActiveUsers(syncActiveUsers);
-
-              //append or create report files
-              Map<String, String> fileMap = client.syncReportFiles();
-              appendFiles(fileMap);
-            } else {
-              log.log(Level.INFO, "Nothing to synchronize");
-            }
-
-          } catch (TException e) {
-            e.printStackTrace();
-          }
-        } catch (TTransportException e) {
-          log.log(Level.INFO,
-              "Cannot connect to server for synchronization --> everyone is booting");
+      Client client = entry.getKey();
+      TTransport transport = entry.getValue();
+      try {
+        if (!transport.isOpen()) {
+          transport.open();
         }
+        try {
+          Map<weatherservice.weatherSync.Location, Long> syncLocationIds = client
+              .syncLocationIds(serverPort);
+          if (!syncLocationIds.isEmpty() && !syncSuccessful) {
+            syncSuccessful = true;
+
+            //add locations and Ids to LocationIds and idLocations maps
+            insertLocationAndIds(syncLocationIds);
+
+            //add active users to active users map
+            Set<Long> syncActiveUsers = client.syncActiveUsers();
+            insertActiveUsers(syncActiveUsers);
+
+            //append or create report files
+            Map<String, String> fileMap = client.syncReportFiles();
+            appendFiles(fileMap);
+          } else {
+            log.log(Level.INFO, "Nothing to synchronize");
+          }
+
+        } catch (TException e) {
+          e.printStackTrace();
+        }
+      } catch (TTransportException e) {
+        log.log(Level.INFO,
+            "Cannot connect to server for synchronization --> everyone is booting");
       }
     }
-
   }
+
 
   //this methods updates both the idLocations and the LocationIds maps
   private void insertLocationAndIds(
@@ -725,9 +742,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
       Long userId = entry.getValue();
 
       LocationIds.putIfAbsent(location, userId);
-      if (idLocations.putIfAbsent(userId, location).equals(null)) {
+      /*if (idLocations.putIfAbsent(userId, location).equals(null)) {
         i++;
-      }
+      }*/
     }
     log.log(Level.INFO,
         i + " Locations and Ids were inserted");

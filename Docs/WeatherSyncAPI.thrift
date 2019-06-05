@@ -156,7 +156,7 @@ service WeatherSync{
     * It returns a map of locations to Ids.
     *
     */
-    map<Location,i64> syncLocationIds()
+    map<Location,i64> syncLocationIds(1: i32 myPort)
 
 }
 
