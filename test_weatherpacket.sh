@@ -21,7 +21,6 @@ echo "Starting Sensors:"
 ./sensor/build/install/sensor/bin/sensor wind 5 127.0.0.1 5558 127.0.0.1 5555 demo &
 ./sensor/build/install/sensor/bin/sensor rain 5 127.0.0.1 5559 127.0.0.1 5555 demo&
 
-
 ./sensor/build/install/sensor/bin/sensor temperature 5 127.0.0.1 5566 127.0.0.1 5565 demo &
 ./sensor/build/install/sensor/bin/sensor humidity 5 127.0.0.1 5567 127.0.0.1 5565 demo &
 ./sensor/build/install/sensor/bin/sensor wind 5 127.0.0.1 5568 127.0.0.1 5565 demo &

@@ -46,7 +46,7 @@ private String name;
 
         while (true){
             try {
-                Thread.sleep(15 * 1000);
+                Thread.sleep(10 * 1000);
                  int killer = randy.ints(1,3+1).findAny().getAsInt();
                  switch (killer){
                      case 1:

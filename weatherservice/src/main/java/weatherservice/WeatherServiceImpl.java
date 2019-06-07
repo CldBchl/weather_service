@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -688,13 +690,11 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
     }
   }
 
-  // TODO: delete old file, because server gets new one
   private void performRebootSynchronization() {
-
+    LocalDateTime start = LocalDateTime.now();
     //syncSuccessful makes sure that we only try to synchronize ONCE
     // --> if first client cannot be reached we assume that the other servers are also booting
     boolean syncSuccessful = false;
-
     for (Map.Entry<Client, TTransport> entry : clientTransport.entrySet()) {
 
       Client client = entry.getKey();
@@ -722,6 +722,12 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
           } else {
             log.log(Level.INFO, "Nothing to synchronize");
           }
+
+          LocalDateTime end = LocalDateTime.now();
+
+          long diff = ChronoUnit.MILLIS.between(start,end);
+
+          log.log(Level.INFO, "REBOOTET IN "+ diff + "MS");
 
         } catch (TException e) {
           e.printStackTrace();
@@ -765,9 +771,9 @@ public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
         oldFile.delete();
         new File("./serverData/" + serverName).mkdirs();
         FileWriter file = new FileWriter("./serverData/" + serverName + "/" + userId + ".txt",
-            true);
-        file.append(fileContent);
-        file.append("\n");
+            false);
+        file.write(fileContent);
+        //file.write("\n");
         file.flush();
         log.log(Level.INFO,
             "Reports appended for userId " + userId);
