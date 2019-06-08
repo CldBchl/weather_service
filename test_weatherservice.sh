@@ -5,10 +5,10 @@
 trap "kill 0" EXIT
 
 #remove any data which is stored in the weatherservice
-rm -r ./serverData/start
+rm -r ./serverData/
 
 echo "Starting Weatherservice:"
 # parameters Name Port
-./weatherservice/build/install/weatherservice/bin/weatherservice Demo 9090
+./weatherservice/build/install/weatherservice/bin/weatherservice Demo 9090 9091 9092
 
 wait

@@ -4,21 +4,73 @@
 package weatherservice;
 
 
+import org.apache.thrift.transport.TTransportException;
+
+import javax.swing.table.TableRowSorter;
+import java.util.Random;
+
 public class Weatherservice {
-private int port;
+private int thriftPort1;
+private int thriftPort2;
+private int thriftPort3;
 private String name;
 
-    public Weatherservice(String name, String port) {
+
+    public Weatherservice(String name, String serverPort1, String serverPort2, String serverPort3) {
         this.name = name;
-        this.port = Integer.parseInt(port);
+        thriftPort1= Integer.parseInt(serverPort1);
+        thriftPort2= Integer.parseInt(serverPort2);
+        thriftPort3= Integer.parseInt(serverPort3);
     }
 
     public static void main(String[] args)  {
-        Weatherservice weatherservice = new Weatherservice(args[0],args[1]);
+        Random randy = new Random();
+
+
+        Weatherservice weatherservice = new Weatherservice(args[0],args[1], args[2] , args[3]);
         System.out.println(weatherservice.name);
 
-        RpcServer rpcServer = new RpcServer(weatherservice.port);
-        Thread rpcServerThread = new Thread(rpcServer);
-        rpcServerThread.start();
+        //initialize three thrift servers, each one takes the ports of the other to servers for
+        //setting up the WeatherSync-clients
+        RpcServer rpcServer1 = new RpcServer("thriftServer1", weatherservice.thriftPort1, weatherservice.thriftPort2, weatherservice.thriftPort3);
+        Thread rpcServerThread1 = new Thread(rpcServer1);
+        rpcServerThread1.start();
+
+        RpcServer rpcServer2 = new RpcServer("thriftServer2",weatherservice.thriftPort2, weatherservice.thriftPort3, weatherservice.thriftPort1);
+        Thread rpcServerThread2 = new Thread(rpcServer2);
+        rpcServerThread2.start();
+
+        RpcServer rpcServer3 = new RpcServer("thriftServer3",weatherservice.thriftPort3, weatherservice.thriftPort1, weatherservice.thriftPort2);
+        Thread rpcServerThread3 = new Thread(rpcServer3);
+        rpcServerThread3.start();
+
+        while (true){
+            try {
+                Thread.sleep(10 * 1000);
+                 int killer = randy.ints(1,3+1).findAny().getAsInt();
+                 switch (killer){
+                     case 1:
+                         rpcServer1.stop();
+                         Thread.sleep(10 * 1000);
+                         rpcServer1.start();
+                         break;
+                     case 2:
+                         rpcServer2.stop();
+                         Thread.sleep(10 * 1000);
+                         rpcServer2.start();
+                         break;
+                     case 3:
+                         rpcServer3.stop();
+                         Thread.sleep(10 * 1000);
+                         rpcServer3.start();
+                         break;
+                         default:
+
+                 }
+
+            } catch (InterruptedException | TTransportException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package code.weatherstation;
 
+import code.weatherstation.thrift.Weather;
 import code.weatherstation.thrift.WeatherReport;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,6 +13,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.json.JSONObject;
 
 /*
@@ -28,15 +32,28 @@ public class SensorDataHandler implements Runnable {
   private WeatherReport report;
 
   public SensorDataHandler(int receivePort, InetAddress receiveIpAddress, String stationName,
-      WStationThriftClient client) {
+      WStationThriftClient client){
     this.stationName = stationName;
     weatherClient = client;
     report= new WeatherReport();
     //the executorService manages as single WStationThriftClient thread and queues submitted tasks
     executorService= Executors.newSingleThreadExecutor();
-
+    new File("./temp/paho").mkdirs();
+    MqttDefaultFilePersistence filePersistence =
+            new MqttDefaultFilePersistence("./temp/paho");
 
     try {
+      MqttClient mqttClient=new MqttClient("tcp://localhost:1883",
+              MqttClient.generateClientId(),filePersistence);
+      mqttClient.setCallback( new SimpleMqttCallback(this, client) );
+      mqttClient.connect();
+      mqttClient.subscribe(String.valueOf(receivePort));
+    } catch (MqttException e) {
+      e.printStackTrace();
+    }
+
+
+    /*try {
       udpSocket = new DatagramSocket(null);
       udpSocket.setReuseAddress(true);
       udpSocket.bind(new InetSocketAddress(receiveIpAddress, receivePort));
@@ -46,25 +63,24 @@ public class SensorDataHandler implements Runnable {
       e.printStackTrace();
       log.log(Level.WARNING, "UDP socket initialization failed");
       //TODO: handle error
-      return;
-    }
+    }*/
 
   }
 
   private void handleSensorData() {
     while (true) {
-      String data = receiveUDPPackets();
-      parseAndStoreSensorData(data);
-      prepareWeatherReport(data);
+      //String data = receiveUDPPackets();
+      //parseAndStoreSensorData(data);
+      //prepareWeatherReport(data);
 
       //executes the run method of WStationThriftClient or queues the request
       //if our single thread is currently working
-      executorService.execute(weatherClient);
+      //executorService.execute(weatherClient);
     }
   }
 
 
-  private static String receiveUDPPackets() {
+  /*private static String receiveUDPPackets() {
     byte[] buf = new byte[1024];
     DatagramPacket packet = new DatagramPacket(buf, 1024);
 
@@ -80,8 +96,7 @@ public class SensorDataHandler implements Runnable {
         byte[] data = packet.getData();
 
         String dataString = new String(data, 0, len);
-        System.out
-            .printf("Receive data from IP %s and from port %d :%n%s%n", address, port, dataString);
+        //System.out.printf("Receive data from IP %s and from port %d :%n%s%n", address, port, dataString);
 
         return dataString;
 
@@ -94,9 +109,9 @@ public class SensorDataHandler implements Runnable {
 
       }
     }
-  }
+  }*/
 
-  private void parseAndStoreSensorData(String data) {
+  public void parseAndStoreSensorData(String data) {
     //System.out.println(data);
 
     JSONObject json = new JSONObject(data);
@@ -139,7 +154,7 @@ public class SensorDataHandler implements Runnable {
     }
   }
 
-  private void prepareWeatherReport(String data) {
+  public void prepareWeatherReport(String data) {
 
     JSONObject json = new JSONObject(data);
 
@@ -182,7 +197,38 @@ public class SensorDataHandler implements Runnable {
   @Override
   public void run() {
     log.log(Level.INFO, "sensorDataHandler thread successful");
-    handleSensorData();
-
+    //handleSensorData();
+    while (true){ /* Running Loop */ }
   }
+}
+
+ class SimpleMqttCallback implements org.eclipse.paho.client.mqttv3.MqttCallback{
+
+  private SensorDataHandler handler;
+  private WStationThriftClient client;
+  private ExecutorService executorService;
+
+   public SimpleMqttCallback(SensorDataHandler handler, WStationThriftClient client){
+     this.handler = handler;
+     this.client = client;
+     this.executorService= Executors.newSingleThreadExecutor();
+   }
+
+  public void connectionLost(Throwable throwable) {
+    System.out.println("Connection to MQTT broker lost!");
+  }
+
+  public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+    System.out.println("Message received:\n\t"+ new String(mqttMessage.getPayload()) );
+
+    String data = new String(mqttMessage.getPayload());
+    handler.parseAndStoreSensorData(data);
+    handler.prepareWeatherReport(data);
+    executorService.execute(client);
+  }
+
+  public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+    // not used in this example
+  }
+
 }
