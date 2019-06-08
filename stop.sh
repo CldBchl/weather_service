@@ -4,6 +4,7 @@ pidFile='pids.pid'
 servicePidFile='services.pid'
 servicePortFile="./servicePorts"
 httpPortFile="./httpPorts"
+temp="./temp"
 
 if [[ -f ${servicePortFile} ]];
 then
@@ -39,6 +40,9 @@ else
 fi
 
 sleep 4
+
+rm -r $temp
+rm -r *tcp*
 
 if [[ -f ${servicePidFile} ]];
 then
