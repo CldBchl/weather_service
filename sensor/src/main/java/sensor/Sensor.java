@@ -1,25 +1,22 @@
 package sensor;
 
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.nio.charset.StandardCharsets;
-import java.util.Random;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-
-import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
-import org.json.*;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.json.JSONObject;
 
 /*
  * The Sensor class generates data and sends it via UDP
@@ -38,7 +35,7 @@ public class Sensor{
 
     private String topic;
     private String clientId;
-    private final String broker = "tcp://127.0.0.1:1883";
+    private final String broker = "tcp://18.194.232.197:1883";
     private final int qos = 2; //exactly once
     //private final MemoryPersistence persistence = new MemoryPersistence();
     private MqttClient publisher;
@@ -181,6 +178,7 @@ public class Sensor{
             MqttMessage message = new MqttMessage(bytes);
             message.setQos(qos);
             publisher.publish(topic, message);
+            System.out.println("Message "+ new String(message.getPayload()) +" sent at:"+ System.currentTimeMillis());
             publisher.disconnect();
         }catch (MqttException e){
             System.out.println("reason "+e.getReasonCode());
