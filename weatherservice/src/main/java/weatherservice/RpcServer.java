@@ -19,6 +19,9 @@ public class RpcServer implements Runnable {
   private int serverPort;
   private String serverName;
 
+  // to stop thread
+  private volatile boolean exit = false;
+
   //default settings for TThreadpoolserver is IP = 0.0.0.0
   private String syncServerIp = "0.0.0.0";
   private int syncServerPort1;
@@ -33,7 +36,7 @@ public class RpcServer implements Runnable {
   }
 
   public void start() throws TTransportException {
-    WeatherServiceImpl weatherServiceImpl = new WeatherServiceImpl(serverName, syncServerIp,
+    WeatherServiceImpl weatherServiceImpl = new WeatherServiceImpl(serverName, syncServerIp, serverPort,
         syncServerPort1, syncServerPort2);
     TMultiplexedProcessor processor = new TMultiplexedProcessor();
     processor.registerProcessor("WeatherAPI", new Weather.Processor<>(weatherServiceImpl));

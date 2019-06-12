@@ -1,5 +1,6 @@
 package sensor;
 
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.IOException;
@@ -8,11 +9,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.json.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.text.DecimalFormat;
-
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 /*
  * The Sensor class generates data and sends it via UDP
@@ -29,10 +36,32 @@ public class Sensor{
     private int remotePort;
     private int interval;
 
+    private String topic;
+    private String clientId;
+    private final String broker = "tcp://127.0.0.1:1883";
+    private final int qos = 2; //exactly once
+    //private final MemoryPersistence persistence = new MemoryPersistence();
+    private MqttClient publisher;
+    private MqttConnectOptions options;
 
     public Sensor(String type, String interval, String ip, String port, String remoteIp, String remotePort){
 
-        // Assignments
+        new File("./temp/paho").mkdirs();
+        MqttDefaultFilePersistence filePersistence =
+                new MqttDefaultFilePersistence("./temp/paho");
+
+        options = new MqttConnectOptions();
+        options.setCleanSession(true);
+        options.setAutomaticReconnect(true);
+        options.setConnectionTimeout(10);
+        // Assignments\
+        this.clientId = port;
+        try {
+            this.publisher = new MqttClient(broker, clientId,filePersistence);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+        this.topic = remotePort;
         this.interval = Integer.parseInt(interval);
         this.type = type;
         this.port = Integer.parseInt(port);
@@ -145,16 +174,29 @@ public class Sensor{
 
         // JSON -> DataPacket
         byte[] bytes = data.toString().getBytes(StandardCharsets.UTF_8);
-        DatagramPacket p = new DatagramPacket(bytes, bytes.length, this.remoteIp, this.remotePort );
+        //DatagramPacket p = new DatagramPacket(bytes, bytes.length, this.remoteIp, this.remotePort );
 
-        // Send DataPacket
         try {
+            publisher.connect(options);
+            MqttMessage message = new MqttMessage(bytes);
+            message.setQos(qos);
+            publisher.publish(topic, message);
+            publisher.disconnect();
+        }catch (MqttException e){
+            System.out.println("reason "+e.getReasonCode());
+            System.out.println("msg "+e.getMessage());
+            System.out.println("loc "+e.getLocalizedMessage());
+            System.out.println("cause "+e.getCause());
+            System.out.println("excep "+e);
+            e.printStackTrace();
+        }
+        // Send DataPacket
+        /*try {
             this.udpSocket.send(p);
         } catch (IOException e) {
             e.printStackTrace();
             log.log(Level.WARNING, "UDP Socktet could not send data");
-            return lastValue;
-        }
+        }*/
         return lastValue;
     }
 
