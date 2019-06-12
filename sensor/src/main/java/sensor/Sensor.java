@@ -1,25 +1,22 @@
 package sensor;
 
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.nio.charset.StandardCharsets;
-import java.util.Random;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-
-import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
-import org.json.*;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.json.JSONObject;
 
 /*
  * The Sensor class generates data and sends it via UDP
