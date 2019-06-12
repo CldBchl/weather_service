@@ -35,7 +35,7 @@ public class Sensor{
 
     private String topic;
     private String clientId;
-    private final String broker = "tcp://18.194.232.197:1883";
+    private final String broker = "tcp://127.0.0.1:1883";
     private final int qos = 2; //exactly once
     //private final MemoryPersistence persistence = new MemoryPersistence();
     private MqttClient publisher;
