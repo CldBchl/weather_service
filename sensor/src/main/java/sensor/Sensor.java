@@ -178,7 +178,6 @@ public class Sensor{
             MqttMessage message = new MqttMessage(bytes);
             message.setQos(qos);
             publisher.publish(topic, message);
-            System.out.println("Message "+ new String(message.getPayload()) +" sent at:"+ System.currentTimeMillis());
             publisher.disconnect();
         }catch (MqttException e){
             System.out.println("reason "+e.getReasonCode());
