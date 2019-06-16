@@ -25,5 +25,7 @@
 - Testdurchführung:  
   - Im Testszenario läuft der MQTT-Broker auf einem AWS EC2 t2.micro Instanz. Die Sensoren und die Wetterstation laufen lokal auf dem selben Rechner. Es werden insgesamt 60 Datenpakete von 12 Sensoren an 4 Wetterstationen übertragen. 
 - Erwartete Testergebnisse: : Die Datenübertragung dauert maximal 500 ms.
-- Ergebnissse: Das Übermitteln der Daten ist im Durchschnitt deutlich schneller und dauert durchschnittlich 111,75 ms. 
+- Ergebnissse: 
+  - Zu Beginn der Datenübertragung brauchen zwei Pakete über 500 ms, vermutlich wird die Übertragung durch die Initialisierung der Komponenten beeinträchtigt.
+  - Im Durchschnitt dauert die Übertratung mit 111, 75 ms aber deutlich kürzer als 500 ms. 
   - Die Messergebnisse sind im File "MQTT_Transmission_Time" dokumentiert.
