@@ -4,6 +4,13 @@
 
 gradle installDist
 
+## Run
+
+docker-compose up 
+./start.sh
+./stop.sh
+docker-compose down 
+
 ## Rest
 
 ### GET
