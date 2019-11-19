@@ -26,7 +26,10 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-
+/**
+ * The WStationThriftClient implements the RPC thrift stubs from the thrift.weather API which
+ * allows communication with Weatherservice instances.
+ */
 public class WStationThriftClient implements Runnable {
 
     private static final Logger log = Logger.getLogger(WStationThriftClient.class.getName());

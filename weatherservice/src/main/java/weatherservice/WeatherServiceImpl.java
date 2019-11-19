@@ -43,6 +43,13 @@ import weatherservice.weatherSync.LoggedInUserException;
 import weatherservice.weatherSync.WeatherSync;
 import weatherservice.weatherSync.WeatherSync.Client;
 
+/**
+ * The WeatherServiceImpl implements methods from the RPC thrift stubs which are defined in
+ * weatherservice.weatherSync and weatherservice.thrift API.
+ * The weatherservice.thrift API allows communicating with the weather stations.
+ * The weatherservice.weatherSync API allows data synchronization between the
+ *  weatherservice's servers.
+ */
 public class WeatherServiceImpl implements Weather.Iface, WeatherSync.Iface {
 
   private static final Logger log = Logger.getLogger(WeatherServiceImpl.class.getName());

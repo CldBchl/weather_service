@@ -9,11 +9,17 @@ import org.apache.thrift.transport.TTransportException;
 import javax.swing.table.TableRowSorter;
 import java.util.Random;
 
+/**
+ * The Weatherservice class receives weather data from weather station and stores it redundantly
+ * on three servers. It has an RPC server which implements both the weatherservice.thrift and the
+ * weatherservice.weather API.
+ */
 public class Weatherservice {
 private int thriftPort1;
 private int thriftPort2;
 private int thriftPort3;
 private String name;
+
 
 
     public Weatherservice(String name, String serverPort1, String serverPort2, String serverPort3) {
@@ -30,7 +36,7 @@ private String name;
         Weatherservice weatherservice = new Weatherservice(args[0],args[1], args[2] , args[3]);
         System.out.println(weatherservice.name);
 
-        //initialize three thrift servers, each one takes the ports of the other to servers for
+        //initialize three thrift servers, each one takes the ports of the other two servers for
         //setting up the WeatherSync-clients
         RpcServer rpcServer1 = new RpcServer("thriftServer1", weatherservice.thriftPort1, weatherservice.thriftPort2, weatherservice.thriftPort3);
         Thread rpcServerThread1 = new Thread(rpcServer1);

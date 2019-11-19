@@ -11,7 +11,7 @@ import weatherservice.thrift.Weather;
 import weatherservice.weatherSync.WeatherSync;
 
 /*
- * The RpcServer class
+ * The RpcServer class handles RPC calls. 
  */
 public class RpcServer implements Runnable {
 

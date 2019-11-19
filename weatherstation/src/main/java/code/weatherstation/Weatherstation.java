@@ -5,7 +5,7 @@ import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
 /*
- * The Weatherstation class receives sensor data via UDP and handles Http requests via TCP.
+ * The Weatherstation class receives sensor data via UDP/MQTT and handles Http requests via TCP.
  */
 public class Weatherstation{
 

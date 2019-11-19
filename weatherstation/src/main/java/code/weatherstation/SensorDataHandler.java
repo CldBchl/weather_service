@@ -19,7 +19,7 @@ import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.json.JSONObject;
 
 /*
- * The SensorDataHandler class receives data via UDP and processes the incoming messages.
+ * The SensorDataHandler class receives data via MQTT/UDP and processes the incoming messages.
  */
 
 public class SensorDataHandler implements Runnable {
@@ -62,7 +62,7 @@ public class SensorDataHandler implements Runnable {
     } catch (IOException e) {
       e.printStackTrace();
       log.log(Level.WARNING, "UDP socket initialization failed");
-      //TODO: handle error
+
     }*/
 
   }
