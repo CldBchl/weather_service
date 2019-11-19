@@ -2,7 +2,7 @@
 
 ## Project description 
 
-This project was part of the distributed systems lab in summer semester 2019 at Hochschule Darmstadt.
+This project was part of the distributed systems lab during the summer semester 2019 at Hochschule Darmstadt, University of Applied Sciences.
 The task was to implement a distributed weather service consisting of 
 - sensors (temperature, humidity, rain, wind) : sensors send randomly generated weather data via UDP/ MQTT to their respective weather stations
 - weather stations: receive weather data from at least three sensors. Weather stations include a HTTP- server 
