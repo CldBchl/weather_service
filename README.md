@@ -40,7 +40,7 @@ send their data to the station. Each weather station transmits its data to the s
 service it is assigned to. 
 
 
-Check the transmitted sensor values on ports *5554*, *5564*, *5574* according to the [REST API](##REST) documentation.
+Check the transmitted sensor values on ports *5554*, *5564*, *5574* according to the [REST API](##Weather stations REST API) documentation.
 
 `docker-compose down`
 
