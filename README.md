@@ -24,7 +24,7 @@ Launch the demo mode to run the application on your host system.
 
 `docker-compose up`
 
-**Note**: if you run the code on macOS, remove the last line from the docker-compose.yml (**network_mode: host**)
+**Note**: if you run the code on macOS, remove the last line from the docker-compose.yml (*network_mode: host*)
 
 
 
@@ -40,7 +40,7 @@ send their data to the station. Each weather station transmits its data to the s
 service it is assigned to. 
 
 
-Check the transmitted sensor values on ports **5554**, **5564**, **5574** according to the [REST API](##REST) documentation.
+Check the transmitted sensor values on ports *5554*, *5564*, *5574* according to the [REST API](##REST) documentation.
 
 `docker-compose down`
 
@@ -48,7 +48,7 @@ Check the transmitted sensor values on ports **5554**, **5564**, **5574** accord
 
 `docker-compose up`
 
-**Note**: if you run the code on macOS, remove the last line from the docker-compose.yml (**network_mode: host**)
+**Note**: if you run the code on macOS, remove the last line from the docker-compose.yml (*network_mode: host*)
 
 
 Update the start.sh file:
