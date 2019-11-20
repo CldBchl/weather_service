@@ -30,14 +30,13 @@ Launch the demo mode to run the application on your host system.
 
 `./test_weatherservice.sh`
 
-This script launches a weather service instance with three servers.
+The test_weatherservice.sh script launches a weather service instance with three servers.
 
 
 `./test_weatherpacket.sh`
 
-This script launches three weather stations and for each sensors it launches four sensors, that 
-send their data to the station. Each weather station transmits its data to the server of the weather
-service it is assigned to. 
+The test_weatherpacket.sh script launches three weather stations and for each station it launches four sensors, that 
+send their data to the corresponding station. Each weather station transmits its data to the weather service server it is assigned to. 
 
 
 Check the transmitted sensor values on ports *5554*, *5564*, *5574* according to the [REST API](#weather-stations-rest-api) documentation.
